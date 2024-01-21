@@ -95,7 +95,8 @@ namespace PSO_Planner
     double APSO::FitnessFunction (AParticle *Population,
                                   const APoint &Start, const APoint &Goal,
                                   std::vector<APoint> &Waypoint,
-                                  const unsigned char *Costmap) const {
+                                  const unsigned char *Costmap) const
+    {
         std::vector<double> X(this->NBreakpoint_ + 2);
         std::vector<double> Y(this->NBreakpoint_ + 2);
 

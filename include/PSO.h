@@ -125,6 +125,7 @@ namespace PSO_Planner
          * @param Start[in] A constant reference to the starting point.
          * @param Goal[in] A constant reference to the goal point.
          * @param Waypoint[in] A constant reference to a vector of APoint objects representing the waypoints for the path.
+          * @param Costmap[in] A pointer points to an array of unsigned char values representing the costmap.
          *
          * @return A double value representing the fitness value of the particle.
          */
@@ -159,7 +160,7 @@ namespace PSO_Planner
         * This method generates a path within a costmap from a specified start point to a goal point using
         * the provided costmap data. The resulting path is stored in the provided vector.
         *
-        * @param Costmap[in] A pointer points to the costmap represented as an array of unsigned char values.
+         * @param Costmap[in] A pointer points to an array of unsigned char values representing the costmap.
         * @param Start[in] A constant reference to the starting point.
          * @param Goal[in] A constant reference to the goal point.
         * @param Path[out] Reference to a vector of APoint objects that will store the generated path.
