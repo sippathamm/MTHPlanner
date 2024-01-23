@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <random>
+#include <thread>
 
 #define CLAMP(X, MIN, MAX)          std::max(MIN, std::min(MAX, X))
 
@@ -14,16 +15,12 @@ namespace PSO_Planner
 {
     APSO::APSO (APoint LowerBound,
                 APoint UpperBound,
-                double CostmapResolution, double CostmapOriginX, double CostmapOriginY,
                 int MaxIteration, int Population, int Breakpoint, int Waypoint,
                 double InertialCoefficient, double SocialCoefficient, double CognitiveCoefficient,
                 double VelocityFactor, double ObstacleCostFactor,
                 double FitnessValueScalingFactor, double PenaltyScalingFactor) :
                 LowerBound_(LowerBound),
                 UpperBound_(UpperBound),
-                CostmapResolution_(CostmapResolution),
-                CostmapOriginX_(CostmapOriginX),
-                CostmapOriginY_(CostmapOriginY),
                 MaxIteration_(MaxIteration),
                 NPopulation_(Population),
                 NBreakpoint_(Breakpoint),
@@ -36,7 +33,13 @@ namespace PSO_Planner
                 FitnessValueScalingFactor_(FitnessValueScalingFactor),
                 PenaltyScalingFactor_(PenaltyScalingFactor)
     {
+        this->Population_ = std::vector<AParticle> (NPopulation_);
 
+        this->Range_ = this->UpperBound_ - this->LowerBound_;
+        this->N_ = static_cast<int>(this->Range_.X * this->Range_.Y);
+
+        this->MaximumVelocity_ = this->Range_ * this->VelocityFactor_;
+        this->MinimumVelocity_ = MaximumVelocity_ * -1.0f;
     }
 
     APSO::~APSO () = default;
@@ -174,17 +177,9 @@ namespace PSO_Planner
                            std::vector<APoint> &Path)
     {
         // Initialize
-        this->Range_ = this->UpperBound_ - this->LowerBound_;
-        this->N_ = static_cast<int>(this->Range_.X * this->Range_.Y);
-
-        this->MaximumVelocity_ = this->Range_ * this->VelocityFactor_;
-        this->MinimumVelocity_ = MaximumVelocity_ * -1.0f;
-
-        std::vector<AParticle> Population(this->NPopulation_);
-
         for (int PopulationIndex = 0; PopulationIndex < this->NPopulation_; PopulationIndex++)
         {
-            AParticle *CurrentPopulation = &Population[PopulationIndex];
+            AParticle *CurrentPopulation = &this->Population_[PopulationIndex];
 
             std::vector<APoint> Position(this->NBreakpoint_);
             std::vector<APoint> Velocity(this->NBreakpoint_);
@@ -214,46 +209,21 @@ namespace PSO_Planner
         // Optimize
         for (int Iteration = 0; Iteration < this->MaxIteration_; Iteration++)
         {
+            std::vector<std::thread> PopulationList = std::vector<std::thread> (this->NPopulation_);
+
             for (int PopulationIndex = 0; PopulationIndex < this->NPopulation_; PopulationIndex++)
             {
-                AParticle *CurrentPopulation = &Population[PopulationIndex];
+                AParticle *CurrentPopulation = &this->Population_[PopulationIndex];
 
-                // Update Velocity
-                for (int BreakpointIndex = 0; BreakpointIndex < this->NBreakpoint_; BreakpointIndex++)
-                {
-                    APoint NewVelocity = UpdateVelocity(CurrentPopulation, BreakpointIndex);
-                    CurrentPopulation->Velocity[BreakpointIndex] = NewVelocity;
-                }
-
-                // Update Position
-                for (int BreakpointIndex = 0; BreakpointIndex < this->NBreakpoint_; BreakpointIndex++)
-                {
-                    APoint NewPosition = UpdatePosition(CurrentPopulation, BreakpointIndex);
-                    CurrentPopulation->Position[BreakpointIndex] = NewPosition;
-                }
-
-                // Evaluate Fitness Value
-                std::vector<APoint> Waypoint;
-                double FitnessValue = FitnessFunction(CurrentPopulation, Start, Goal, Waypoint, Costmap);
-
-                // Update PBest
-                if (FitnessValue > CurrentPopulation->BestFitnessValue)
-                {
-                    CurrentPopulation->BestPosition = CurrentPopulation->Position;
-                    CurrentPopulation->BestFitnessValue = FitnessValue;
-                }
-
-                // Update GBest
-                if (FitnessValue > this->GlobalBestFitnessValue_)
-                {
-                    this->GlobalBestPosition_ = CurrentPopulation->Position;
-                    this->GlobalBestFitnessValue_ = FitnessValue;
-
-                    this->Waypoint_ = Waypoint;
-                }
+                PopulationList[PopulationIndex] = std::thread(&APSO::Optimize, this, CurrentPopulation, Start, Goal, Costmap);
             }
 
-            std::cout << "[INFO] Iteration: " << Iteration << " >> " << "Best fitness value: " << this->GlobalBestFitnessValue_ << std::endl;
+            for (int PopulationIndex = 0; PopulationIndex < this->NPopulation_; PopulationIndex++)
+            {
+                PopulationList[PopulationIndex].join();
+            }
+
+            std::cout << "[INFO] Iteration: " << Iteration << " >>> " << "Best fitness value: " << this->GlobalBestFitnessValue_ << std::endl;
         }
 
         std::cout << "[INFO] Completed, Optimal fitness value: " << this->GlobalBestFitnessValue_ << std::endl;
@@ -283,6 +253,49 @@ namespace PSO_Planner
         }
 
         return !Path.empty();
+    }
+
+    void APSO::Optimize (AParticle *CurrentPopulation,
+                         const APoint &Start, const APoint &Goal,
+                         const unsigned char *Costmap)
+    {
+        // Update Velocity
+        for (int BreakpointIndex = 0; BreakpointIndex < this->NBreakpoint_; BreakpointIndex++)
+        {
+            APoint NewVelocity = UpdateVelocity(CurrentPopulation, BreakpointIndex);
+            CurrentPopulation->Velocity[BreakpointIndex] = NewVelocity;
+        }
+
+        // Update Position
+        for (int BreakpointIndex = 0; BreakpointIndex < this->NBreakpoint_; BreakpointIndex++)
+        {
+            APoint NewPosition = UpdatePosition(CurrentPopulation, BreakpointIndex);
+            CurrentPopulation->Position[BreakpointIndex] = NewPosition;
+        }
+
+        // Evaluate Fitness Value
+        std::vector<APoint> Waypoint;
+        double FitnessValue = FitnessFunction(CurrentPopulation, Start, Goal, Waypoint, Costmap);
+
+        // Update PBest
+        if (FitnessValue > CurrentPopulation->BestFitnessValue)
+        {
+            CurrentPopulation->BestPosition = CurrentPopulation->Position;
+            CurrentPopulation->BestFitnessValue = FitnessValue;
+        }
+
+        GlobalBestLock.lock();
+
+        // Update GBest
+        if (FitnessValue > this->GlobalBestFitnessValue_)
+        {
+            this->GlobalBestPosition_ = CurrentPopulation->Position;
+            this->GlobalBestFitnessValue_ = FitnessValue;
+
+            this->Waypoint_ = Waypoint;
+        }
+
+        GlobalBestLock.unlock();
     }
 
     double GenerateRandom (double LowerBound, double UpperBound)

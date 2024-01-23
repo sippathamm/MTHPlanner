@@ -9,6 +9,7 @@
 
 #include <utility>
 #include <vector>
+#include <mutex>
 
 #define LETHAL_COST         253
 
@@ -39,9 +40,6 @@ namespace PSO_Planner
           *
           * @param LowerBound[in] An APoint object representing the lower bound of the search space.
           * @param UpperBound[in] An APoint object representing the upper bound of the search space.
-          * @param CostmapResolution[in] A double value representing the resolution of the costmap.
-          * @param CostmapOriginX[in] A double value representing the x-coordinate of the costmap origin.
-          * @param CostmapOriginY[in] A double value representing the y-coordinate of the costmap origin.
           * @param MaxIteration[in] An integer specifying the maximum number of iterations.
           * @param Population[in] An integer specifying the population size.
           * @param Breakpoint[in] An integer specifying the number of breakpoints.
@@ -56,7 +54,6 @@ namespace PSO_Planner
          */
          APSO (APoint LowerBound,
                APoint UpperBound,
-               double CostmapResolution, double CostmapOriginX, double CostmapOriginY,
                int MaxIteration, int Population, int Breakpoint, int Waypoint,
                double InertialCoefficient, double SocialCoefficient, double CognitiveCoefficient,
                double VelocityFactor = 0.5f, double ObstacleCostFactor = 1.00f,
@@ -172,9 +169,12 @@ namespace PSO_Planner
                          const APoint &Goal,
                          std::vector<APoint> &Path);
 
+        void Optimize (AParticle *CurrentPopulation,
+                       const APoint &Start, const APoint &Goal,
+                       const unsigned char *Costmap);
+
     private:
         APoint LowerBound_, UpperBound_;
-        double CostmapResolution_, CostmapOriginX_, CostmapOriginY_;
         int MaxIteration_, NPopulation_;
         int NBreakpoint_, NWaypoint_;
         double InertialCoefficient_, SocialCoefficient_, CognitiveCoefficient_;
@@ -183,11 +183,13 @@ namespace PSO_Planner
         double FitnessValueScalingFactor_;
         double PenaltyScalingFactor_;
 
+        std::vector<AParticle> Population_;
         APoint Range_;
         int N_{};
         APoint MaximumVelocity_, MinimumVelocity_;
         std::vector<APoint> GlobalBestPosition_;
         double GlobalBestFitnessValue_ = (double)-INFINITY;
+        std::mutex GlobalBestLock;
 
         std::vector<APoint> Waypoint_;
     };

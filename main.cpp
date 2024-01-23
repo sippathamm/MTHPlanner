@@ -42,15 +42,11 @@ int main ()
     int Y = 384;
 
     auto* Costmap = new unsigned char[X * Y];
-    double CostmapResolution = 1.0f;
-    double CostmapOriginX = 0.0f;
-    double CostmapOriginY = 0.0f;
 
     ReadCostmap(CostmapFile, Costmap, X, Y);
 //    DisplayCostmap(Costmap, X, Y);
 
     PSO_Planner::APSO PSO(LowerBound, UpperBound,
-                          CostmapResolution, CostmapOriginX, CostmapOriginY,
                           MaxIteration, Population, Breakpoint, Waypoint,
                           InertialCoefficient, SocialCoefficient, CognitiveCoefficient,
                           VelocityFactor, ObstacleCostFactor
