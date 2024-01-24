@@ -13,7 +13,7 @@
 
 #define LETHAL_COST         253
 
-namespace PSO_Planner
+namespace Optimizer
 {
     /**
      * @brief Individual particle contains N waypoints stored in position vector

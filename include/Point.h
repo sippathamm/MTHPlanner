@@ -5,7 +5,7 @@
 #ifndef POINT_H
 #define POINT_H
 
-namespace PSO_Planner
+namespace Optimizer
 {
     typedef struct APoint
     {

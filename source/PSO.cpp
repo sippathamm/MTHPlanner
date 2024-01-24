@@ -11,7 +11,7 @@
 
 #define CLAMP(X, MIN, MAX)          std::max(MIN, std::min(MAX, X))
 
-namespace PSO_Planner
+namespace Optimizer
 {
     APSO::APSO (APoint LowerBound,
                 APoint UpperBound,

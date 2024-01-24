@@ -8,19 +8,19 @@
 
 #include <PSO.h>
 
-//PSO_Planner::APoint LowerBound(-2, -6);
-//PSO_Planner::APoint UpperBound(10, 6);
+//Optimizer::APoint LowerBound(-2, -6);
+//Optimizer::APoint UpperBound(10, 6);
 
-PSO_Planner::APoint LowerBound(0, 0);
-PSO_Planner::APoint UpperBound(384, 384);
+Optimizer::APoint LowerBound(0, 0);
+Optimizer::APoint UpperBound(384, 384);
 
-PSO_Planner::APoint Start(214, 159);
-PSO_Planner::APoint Goal(181, 240);
+Optimizer::APoint Start(214, 159);
+Optimizer::APoint Goal(181, 240);
 
-int MaxIteration = 5000;
-int Population = 15;
+int MaxIteration = 1000;
+int Population = 50;
 int Breakpoint = 3;
-int InterpolationPoint = 25;
+int InterpolationPoint = 5;
 int Waypoint = 1 + (Breakpoint + 1) * InterpolationPoint;
 
 double InertialCoefficient = 0.9f;
@@ -30,7 +30,7 @@ double CognitiveCoefficient = 1.5f;
 double VelocityFactor = 0.5f;
 double ObstacleCostFactor = 0.95f;
 
-std::vector<PSO_Planner::APoint> Path;
+std::vector<Optimizer::APoint> Path;
 
 void ReadCostmap (const std::string& File, unsigned char *Costmap, int X, int Y);
 void DisplayCostmap (const unsigned char *Costmap, int X, int Y);
@@ -46,7 +46,7 @@ int main ()
     ReadCostmap(CostmapFile, Costmap, X, Y);
 //    DisplayCostmap(Costmap, X, Y);
 
-    PSO_Planner::APSO PSO(LowerBound, UpperBound,
+    Optimizer::APSO PSO(LowerBound, UpperBound,
                           MaxIteration, Population, Breakpoint, Waypoint,
                           InertialCoefficient, SocialCoefficient, CognitiveCoefficient,
                           VelocityFactor, ObstacleCostFactor
@@ -55,7 +55,7 @@ int main ()
     if (PSO.CreatePlan(Costmap, Start, Goal, Path))
     {
         std::cout << "Waypoint = [";
-        for (PSO_Planner::APoint &i : Path)
+        for (Optimizer::APoint &i : Path)
         {
             std::cout << "(" << i.X << ", " << i.Y << ")" << ", ";
         }
