@@ -7,7 +7,6 @@
 
 #include <iostream>
 #include <random>
-#include <thread>
 
 #define CLAMP(X, MIN, MAX)          std::max(MIN, std::min(MAX, X))
 
@@ -33,13 +32,7 @@ namespace Optimizer
                 FitnessValueScalingFactor_(FitnessValueScalingFactor),
                 PenaltyScalingFactor_(PenaltyScalingFactor)
     {
-        this->Population_ = std::vector<AParticle> (NPopulation_);
 
-        this->Range_ = this->UpperBound_ - this->LowerBound_;
-        this->N_ = static_cast<int>(this->Range_.X * this->Range_.Y);
-
-        this->MaximumVelocity_ = this->Range_ * this->VelocityFactor_;
-        this->MinimumVelocity_ = MaximumVelocity_ * -1.0f;
     }
 
     APSO::~APSO () = default;
@@ -177,6 +170,14 @@ namespace Optimizer
                            std::vector<APoint> &Path)
     {
         // Initialize
+        this->Population_ = std::vector<AParticle> (NPopulation_);
+
+        this->Range_ = this->UpperBound_ - this->LowerBound_;
+        this->N_ = static_cast<int>(this->Range_.X * this->Range_.Y);
+
+        this->MaximumVelocity_ = this->Range_ * this->VelocityFactor_;
+        this->MinimumVelocity_ = MaximumVelocity_ * -1.0f;
+
         for (int PopulationIndex = 0; PopulationIndex < this->NPopulation_; PopulationIndex++)
         {
             AParticle *CurrentPopulation = &this->Population_[PopulationIndex];
@@ -209,18 +210,11 @@ namespace Optimizer
         // Optimize
         for (int Iteration = 0; Iteration < this->MaxIteration_; Iteration++)
         {
-            std::vector<std::thread> PopulationList = std::vector<std::thread> (this->NPopulation_);
-
             for (int PopulationIndex = 0; PopulationIndex < this->NPopulation_; PopulationIndex++)
             {
                 AParticle *CurrentPopulation = &this->Population_[PopulationIndex];
 
-                PopulationList[PopulationIndex] = std::thread(&APSO::Optimize, this, CurrentPopulation, Start, Goal, Costmap);
-            }
-
-            for (int PopulationIndex = 0; PopulationIndex < this->NPopulation_; PopulationIndex++)
-            {
-                PopulationList[PopulationIndex].join();
+                Optimize(CurrentPopulation, Start, Goal, Costmap);
             }
 
             std::cout << "[INFO] Iteration: " << Iteration << " >>> " << "Best fitness value: " << this->GlobalBestFitnessValue_ << std::endl;
@@ -284,8 +278,6 @@ namespace Optimizer
             CurrentPopulation->BestFitnessValue = FitnessValue;
         }
 
-        GlobalBestLock.lock();
-
         // Update GBest
         if (FitnessValue > this->GlobalBestFitnessValue_)
         {
@@ -294,8 +286,6 @@ namespace Optimizer
 
             this->Waypoint_ = Waypoint;
         }
-
-        GlobalBestLock.unlock();
     }
 
     double GenerateRandom (double LowerBound, double UpperBound)

@@ -9,7 +9,6 @@
 
 #include <utility>
 #include <vector>
-#include <mutex>
 
 #define LETHAL_COST         253
 
@@ -189,7 +188,6 @@ namespace Optimizer
         APoint MaximumVelocity_, MinimumVelocity_;
         std::vector<APoint> GlobalBestPosition_;
         double GlobalBestFitnessValue_ = (double)-INFINITY;
-        std::mutex GlobalBestLock;
 
         std::vector<APoint> Waypoint_;
     };
