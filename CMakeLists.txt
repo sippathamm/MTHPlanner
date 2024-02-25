@@ -6,8 +6,14 @@ set(CMAKE_CXX_STANDARD 14)
 include_directories(include)
 
 add_executable(GlobalPlanner
+        include/CostMapLoader.h
+        include/Debug.h
+        include/GWOPlanner.h
+        include/Utility.h
         include/Point.h
-        include/spline.h
         include/PSOPlanner.h
+        include/spline.h
         source/main.cpp
+        include/ABCPlanner.h
+        include/Planner.h
 )

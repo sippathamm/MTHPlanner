@@ -5,47 +5,71 @@
 #ifndef POINT_H
 #define POINT_H
 
+#include <cmath>
+
 namespace Optimizer
 {
     typedef struct APoint
     {
     public:
-        APoint() : X(0.0f), Y(0.0f) {}
-        APoint(double X, double Y) : X(X), Y(Y) {}
+        APoint () : X(0.0f), Y(0.0f) {}
+
+        APoint (double X, double Y) : X(X), Y(Y) {}
+
+        APoint (const APoint &AnotherPoint)
+        {
+            X = AnotherPoint.X;
+            Y = AnotherPoint.Y;
+        }
 
         double X;
         double Y;
 
         APoint operator + (const APoint &AnotherPoint) const
         {
-            return {this->X + AnotherPoint.X, this->Y + AnotherPoint.Y};
+            return {X + AnotherPoint.X, Y + AnotherPoint.Y};
         }
 
         APoint operator - (const APoint &AnotherPoint) const
         {
-            return {this->X - AnotherPoint.X, this->Y - AnotherPoint.Y};
+            return {X - AnotherPoint.X, Y - AnotherPoint.Y};
         }
 
         APoint operator * (const APoint &AnotherPoint) const
         {
-            return {this->X * AnotherPoint.X, this->Y * AnotherPoint.Y};
+            return {X * AnotherPoint.X, Y * AnotherPoint.Y};
         }
 
         APoint operator * (double Constant) const
         {
-            return {this->X * Constant, this->Y * Constant};
+            return {X * Constant, Y * Constant};
+        }
+
+        APoint operator / (double Constant) const
+        {
+            return {X / Constant, Y / Constant};
         }
 
         bool operator == (const APoint &AnotherPoint) const
         {
-            return (this->X == AnotherPoint.X) && (this->Y == AnotherPoint.Y);
+            return (X == AnotherPoint.X) && (Y == AnotherPoint.Y);
         }
 
         bool operator != (const APoint &AnotherPoint) const
         {
             return !(*this == AnotherPoint);
         }
+
+        double DistanceTo (const APoint &AnotherPoint) const
+        {
+            return std::hypot((X - AnotherPoint.X), (Y - AnotherPoint.Y));
+        }
     } APoint;
+
+    APoint Absolute (const APoint &Point)
+    {
+        return {std::abs(Point.X), std::abs(Point.Y)};
+    }
 }
 
 #endif //POINT_H
