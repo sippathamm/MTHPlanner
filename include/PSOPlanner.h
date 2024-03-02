@@ -93,15 +93,15 @@ namespace MTH
                         switch (this->InitialPositionType_)
                         {
                             case DISTRIBUTED:
-                                RandomPosition = GenerateDistributedRandomPosition();
+                                RandomPosition = GenerateDistributedPosition();
                                 break;
 
                             case CIRCULAR:
-                                RandomPosition = GenerateCircularRandomPosition();
+                                RandomPosition = GenerateCircularPosition();
                                 break;
 
                             default:
-                                RandomPosition = GenerateDistributedRandomPosition();
+                                RandomPosition = GenerateDistributedPosition();
                         }
 
                         APoint RandomVelocity;

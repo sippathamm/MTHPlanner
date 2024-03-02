@@ -69,7 +69,8 @@ int main ()
     MTH::ABC::AABCPlanner ABCPlanner(LowerBound, UpperBound,
                                      MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
                                      InitialPositionType,
-                                     TrajectoryType);
+                                     TrajectoryType,
+                                     Log);
 
     auto *Planner = &GWOPlanner; // Change to desired planner
 

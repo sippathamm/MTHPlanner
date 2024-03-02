@@ -78,7 +78,7 @@ namespace MTH
 
         TRAJECTORY_TYPE TrajectoryType_;
 
-        APoint GenerateDistributedRandomPosition ()
+        APoint GenerateDistributedPosition ()
         {
             APoint RandomPosition;
 
@@ -88,7 +88,7 @@ namespace MTH
             return RandomPosition;
         }
 
-        APoint GenerateCircularRandomPosition ()
+        APoint GenerateCircularPosition ()
         {
             static double Radius = std::hypot(this->Start_->X - this->Goal_->X,
                                               this->Start_->Y - this->Goal_->Y) / 2.0f;
