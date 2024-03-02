@@ -159,10 +159,8 @@ namespace MTH
                 return SUCCESS;
             }
 
-            void Clear ()
+            void Clear () override
             {
-                this->FoodSource_.clear();
-
                 this->GlobalBestPosition_.clear();
                 this->GlobalBestCost_ = (double) INFINITY;
             }

@@ -170,10 +170,8 @@ namespace MTH
                 return SUCCESS;
             }
 
-            void Clear ()
+            void Clear () override
             {
-                this->Population_.clear();
-
                 this->GlobalBestPosition_.Alpha.Position.clear();
                 this->GlobalBestPosition_.Alpha.Cost = (double) INFINITY;
 

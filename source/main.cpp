@@ -72,7 +72,7 @@ int main ()
                                      TrajectoryType,
                                      Log);
 
-    auto *Planner = &GWOPlanner; // Change to desired planner
+    MTH::ABasePlanner *Planner = &PSOPlanner;
 
     for (int Run = 1; Run <= NRun; Run++)
     {

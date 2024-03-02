@@ -56,6 +56,8 @@ namespace MTH
             return this->PathLength_;
         }
 
+        virtual void Clear ()  = 0;
+
     protected:
         APoint LowerBound_, UpperBound_;
         int MaximumIteration_, NPopulation_, NBreakpoint_, NWaypoint_;
