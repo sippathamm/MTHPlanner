@@ -11,8 +11,8 @@
 int main ()
 {
     int Width, Height;
-    Optimizer::APoint Start, Goal;
-    int CostMapName = CostMapLoader::SCENARIO_2;
+    MTH::APoint Start, Goal;
+    int CostMapName = CostMapLoader::TURTLEBOT3_WORLD;
 
     // Load cost map
     auto CostMap = CostMapLoader::CostMapLoader(Width, Height, CostMapName,
@@ -26,16 +26,17 @@ int main ()
     double MaximumWeight = 0.9f;
     double MinimumWeight = 0.4f;
     double VelocityFactor = 0.5;
-    Optimizer::PATH_TYPE PathType = Optimizer::CUBIC_SPLINE;
-    bool Log = false;
+    MTH::INITIAL_POSITION_TYPE InitialPositionType = MTH::CIRCULAR;
+    MTH::TRAJECTORY_TYPE TrajectoryType = MTH::CUBIC_SPLINE;
+    bool Log = true;
 
-    Optimizer::APoint LowerBound(0.0f, 0.0f);
-    Optimizer::APoint UpperBound(Width, Height);
+    MTH::APoint LowerBound(0.0f, 0.0f);
+    MTH::APoint UpperBound(Width, Height);
 
     // PSO parameter configuration
     double SocialCoefficient = 2.0f;
     double CognitiveCoefficient = 1.3f;
-    int VelocityConfinement = Optimizer::PSO::HYPERBOLIC;
+    int VelocityConfinement = MTH::PSO::HYPERBOLIC;
 
     // GWO parameter configuration
     double Theta = 2.2f;
@@ -45,33 +46,36 @@ int main ()
 
     int NRun = 1;
 
+    MTH::PSO::APSOPlanner PSOPlanner(LowerBound, UpperBound,
+                                     MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
+                                     SocialCoefficient, CognitiveCoefficient,
+                                     MaximumWeight, MinimumWeight,
+                                     VelocityConfinement,
+                                     VelocityFactor,
+                                     InitialPositionType,
+                                     TrajectoryType,
+                                     Log);
+
+    MTH::GWO::AGWOPlanner GWOPlanner(LowerBound, UpperBound,
+                                     MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
+                                     Theta, K,
+                                     Maximum_a, Minimum_a,
+                                     MaximumWeight, MinimumWeight,
+                                     VelocityFactor,
+                                     InitialPositionType,
+                                     TrajectoryType,
+                                     Log);
+
+    MTH::ABC::AABCPlanner ABCPlanner(LowerBound, UpperBound,
+                                     MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
+                                     InitialPositionType,
+                                     TrajectoryType);
+
+    auto *Planner = &GWOPlanner; // Change to desired planner
+
     for (int Run = 1; Run <= NRun; Run++)
     {
-        Optimizer::PSO::APSOPlanner PSOPlanner(LowerBound, UpperBound,
-                                               MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
-                                               SocialCoefficient, CognitiveCoefficient,
-                                               MaximumWeight, MinimumWeight,
-                                               VelocityFactor,
-                                               VelocityConfinement,
-                                               PathType,
-                                               Log);
-
-        Optimizer::GWO::AGWOPlanner GWOPlanner(LowerBound, UpperBound,
-                                               MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
-                                               Theta, K,
-                                               Maximum_a, Minimum_a,
-                                               MaximumWeight, MinimumWeight,
-                                               VelocityFactor,
-                                               PathType,
-                                               Log);
-
-        Optimizer::ABC::AABCPlanner ABCPlanner(LowerBound, UpperBound,
-                                          MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
-                                          PathType);
-
-        std::vector<Optimizer::APoint> Waypoint;
-
-        auto *Planner = &ABCPlanner; // Change to desired planner
+        std::vector<MTH::APoint> Waypoint;
 
         auto StartTime = std::chrono::high_resolution_clock::now();
         if (Planner->CreatePlan(CostMap, Start, Goal, Waypoint))
@@ -84,6 +88,8 @@ int main ()
             std::cout << "Length (px): " << Planner->GetPathLength() << std::endl;
             std::cout << "Execution time (ms): " << Duration.count() << " milliseconds" << std::endl;
         }
+
+        Planner->Clear();
     }
 
     return 0;

@@ -7,7 +7,7 @@
 
 #include <cmath>
 
-namespace Optimizer
+namespace MTH
 {
     typedef struct APoint
     {
@@ -58,11 +58,6 @@ namespace Optimizer
         bool operator != (const APoint &AnotherPoint) const
         {
             return !(*this == AnotherPoint);
-        }
-
-        double DistanceTo (const APoint &AnotherPoint) const
-        {
-            return std::hypot((X - AnotherPoint.X), (Y - AnotherPoint.Y));
         }
     } APoint;
 

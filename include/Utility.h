@@ -12,9 +12,10 @@
 #define CLAMP(X, MIN, MAX)                      std::max(MIN, std::min(MAX, X))
 #define IS_OUT_OF_BOUND(X, MIN, MAX)            X <= MIN || X >= MAX
 
-namespace Optimizer
+namespace MTH
 {
-    typedef int PATH_TYPE;
+    typedef int TRAJECTORY_TYPE;
+    typedef int INITIAL_POSITION_TYPE;
 
     enum
     {
@@ -26,6 +27,12 @@ namespace Optimizer
     {
         LINEAR = 0,
         CUBIC_SPLINE = 1
+    };
+
+    enum
+    {
+        DISTRIBUTED = 0,
+        CIRCULAR = 1
     };
 
     double GenerateRandom (double LowerBound = 0.0f, double UpperBound = 1.0f)

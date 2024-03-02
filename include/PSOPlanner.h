@@ -5,9 +5,9 @@
 #ifndef PSO_PLANNER_H
 #define PSO_PLANNER_H
 
-#include "Planner.h"
+#include "BasePlanner.h"
 
-namespace Optimizer
+namespace MTH
 {
     namespace PSO
     {
@@ -32,26 +32,29 @@ namespace Optimizer
             std::vector<APoint> Feedback;
         } AParticle;
 
-        class APSOPlanner : public APlanner
+        class APSOPlanner : public ABasePlanner
         {
         public:
             APSOPlanner (const APoint &LowerBound, const APoint &UpperBound,
                          int MaximumIteration, int NPopulation, int NBreakpoint, int NWaypoint,
                          double SocialCoefficient = 1.5f, double CognitiveCoefficient = 1.5f,
                          double MaximumInertialWeight = 0.9f, double MinimumInertialWeight = 0.4,
-                         double VelocityFactor = 0.5,
                          int VelocityConfinement = RANDOM_BACK,
-                         PATH_TYPE PathType = CUBIC_SPLINE,
+                         double VelocityFactor = 0.5,
+                         INITIAL_POSITION_TYPE InitialPositionType = DISTRIBUTED,
+                         TRAJECTORY_TYPE TrajectoryType = CUBIC_SPLINE,
                          bool Log = true) :
-                         APlanner(LowerBound, UpperBound,
-                             MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
-                             PathType, Log),
+                         ABasePlanner(LowerBound, UpperBound,
+                                      MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
+                                      TrajectoryType),
                          SocialCoefficient_(SocialCoefficient),
                          CognitiveCoefficient_(CognitiveCoefficient),
                          MaximumInertialWeight_(MaximumInertialWeight),
                          MinimumInertialWeight_(MinimumInertialWeight),
                          VelocityFactor_(VelocityFactor),
-                         VelocityConfinement_(VelocityConfinement)
+                         VelocityConfinement_(VelocityConfinement),
+                         InitialPositionType_(InitialPositionType),
+                         Log_(Log)
             {
                 std::cout << "[INFO] PSO Planner instance has been created. " << std::endl;
             }
@@ -86,8 +89,20 @@ namespace Optimizer
                     for (int BreakpointIndex = 0; BreakpointIndex < this->NBreakpoint_; BreakpointIndex++)
                     {
                         APoint RandomPosition;
-                        RandomPosition.X = GenerateRandom(this->LowerBound_.X, this->UpperBound_.X);
-                        RandomPosition.Y = GenerateRandom(this->LowerBound_.Y, this->UpperBound_.Y);
+
+                        switch (this->InitialPositionType_)
+                        {
+                            case DISTRIBUTED:
+                                RandomPosition = GenerateDistributedRandomPosition();
+                                break;
+
+                            case CIRCULAR:
+                                RandomPosition = GenerateCircularRandomPosition();
+                                break;
+
+                            default:
+                                RandomPosition = GenerateDistributedRandomPosition();
+                        }
 
                         APoint RandomVelocity;
                         RandomVelocity = (this->LowerBound_ - RandomPosition) +
@@ -143,7 +158,7 @@ namespace Optimizer
 
                 double Length = 0.0f;
 
-                switch (this->PathType_)
+                switch (this->TrajectoryType_)
                 {
                     case LINEAR:
                         LinearPath(Length, Waypoint, X, Y);
@@ -169,6 +184,12 @@ namespace Optimizer
                 return SUCCESS;
             }
 
+            void Clear ()
+            {
+                this->GlobalBestPosition_.clear();
+                this->GlobalBestCost_ = (double) INFINITY;
+            }
+
         protected:
             double InertialWeight_{}, SocialCoefficient_, CognitiveCoefficient_;
             double MaximumInertialWeight_, MinimumInertialWeight_;
@@ -180,6 +201,9 @@ namespace Optimizer
 
             double AverageCost_ = 0.0f;
             double NextAverageCost_ = 0.0f;
+
+            INITIAL_POSITION_TYPE InitialPositionType_;
+            bool Log_;
 
         private:
             void CalculateAdaptiveInertialWeight(AParticle *CurrentPopulation)
@@ -371,6 +395,6 @@ namespace Optimizer
             }
         };
     } // PSO
-} // Optimizer
+} // MTH
 
 #endif // PSO_PLANNER_H

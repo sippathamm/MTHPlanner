@@ -5,9 +5,9 @@
 #ifndef GWO_PLANNER_H
 #define GWO_PLANNER_H
 
-#include "Planner.h"
+#include "BasePlanner.h"
 
-namespace Optimizer
+namespace MTH
 {
     namespace GWO
     {
@@ -26,7 +26,7 @@ namespace Optimizer
             AWolf Delta;    // 3rd Best
         } ALeaderWolf;
 
-        class AGWOPlanner : public APlanner
+        class AGWOPlanner : public ABasePlanner
         {
         public:
             AGWOPlanner (const APoint &LowerBound, const APoint &UpperBound,
@@ -35,18 +35,21 @@ namespace Optimizer
                          double Maximum_a = 2.2f, double Minimum_a = 0.02f,
                          double MaximumWeight = 0.9f, double MinimumWeight = 0.4f,
                          double VelocityFactor = 0.5f,
-                         PATH_TYPE PathType = CUBIC_SPLINE,
+                         INITIAL_POSITION_TYPE InitialPositionType = DISTRIBUTED,
+                         TRAJECTORY_TYPE TrajectoryType = CUBIC_SPLINE,
                          bool Log = true) :
-                         APlanner(LowerBound, UpperBound,
-                                  MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
-                                  PathType, Log),
+                         ABasePlanner(LowerBound, UpperBound,
+                                      MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
+                                      TrajectoryType),
                          Theta_(Theta),
                          K_(K),
                          Maximum_a_(Maximum_a),
                          Minimum_a_(Minimum_a),
                          MaximumWeight_(MaximumWeight),
                          MinimumWeight_(MinimumWeight),
-                         VelocityFactor_(VelocityFactor)
+                         VelocityFactor_(VelocityFactor),
+                         InitialPositionType_(InitialPositionType),
+                         Log_(Log)
             {
                 std::cout << "[INFO] GWO Planner instance has been created." << std::endl;
             }
@@ -80,8 +83,20 @@ namespace Optimizer
                     for (int BreakpointIndex = 0; BreakpointIndex < this->NBreakpoint_; BreakpointIndex++)
                     {
                         APoint RandomPosition;
-                        RandomPosition.X = GenerateRandom(this->LowerBound_.X, this->UpperBound_.X);
-                        RandomPosition.Y = GenerateRandom(this->LowerBound_.Y, this->UpperBound_.Y);
+
+                        switch (this->InitialPositionType_)
+                        {
+                            case DISTRIBUTED:
+                                RandomPosition = GenerateDistributedRandomPosition();
+                                break;
+
+                            case CIRCULAR:
+                                RandomPosition = GenerateCircularRandomPosition();
+                                break;
+
+                            default:
+                                RandomPosition = GenerateDistributedRandomPosition();
+                        }
 
                         Position[BreakpointIndex] = RandomPosition;
                     }
@@ -127,7 +142,7 @@ namespace Optimizer
 
                 double Length = 0.0f;
 
-                switch (this->PathType_)
+                switch (this->TrajectoryType_)
                 {
                     case LINEAR:
                         LinearPath(Length, Waypoint, X, Y);
@@ -149,10 +164,26 @@ namespace Optimizer
                 }
 
                 this->PathLength_ = Length;
-                APlanner::GlobalBestPosition_ = this->GlobalBestPosition_.Alpha.Position;
-                APlanner::GlobalBestCost_ = this->GlobalBestPosition_.Alpha.Cost;
+                ABasePlanner::GlobalBestPosition_ = this->GlobalBestPosition_.Alpha.Position;
+                ABasePlanner::GlobalBestCost_ = this->GlobalBestPosition_.Alpha.Cost;
 
                 return SUCCESS;
+            }
+
+            void Clear ()
+            {
+                this->Population_.clear();
+
+                this->GlobalBestPosition_.Alpha.Position.clear();
+                this->GlobalBestPosition_.Alpha.Cost = (double) INFINITY;
+
+                this->GlobalBestPosition_.Beta.Position.clear();
+                this->GlobalBestPosition_.Beta.Cost = (double) INFINITY;
+
+                this->GlobalBestPosition_.Delta.Position.clear();
+                this->GlobalBestPosition_.Delta.Cost = (double) INFINITY;
+
+                this->GlobalBestCost_ = (double) INFINITY;
             }
 
         protected:
@@ -171,6 +202,9 @@ namespace Optimizer
 
             double AverageCost_ = 0.0f;
             double NextAverageCost_ = 0.0f;
+
+            INITIAL_POSITION_TYPE InitialPositionType_;
+            bool Log_;
 
         private:
             void UpdateGlobalBestPosition ()
@@ -353,6 +387,6 @@ namespace Optimizer
             }
         };
     } // GWO
-} // Optimizer
+} // MTH
 
 #endif // GWO_PLANNER_H

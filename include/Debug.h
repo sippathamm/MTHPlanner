@@ -9,7 +9,7 @@
 
 #include <ostream>
 
-std::ostream& operator << (std::ostream &OS, const std::vector<Optimizer::APoint> &Position)
+std::ostream& operator << (std::ostream &OS, const std::vector<MTH::APoint> &Position)
 {
     OS << "[";
     for (const auto &i : Position)
@@ -21,7 +21,7 @@ std::ostream& operator << (std::ostream &OS, const std::vector<Optimizer::APoint
     return OS;
 }
 
-std::ostream& operator << (std::ostream &OS, const Optimizer::APoint &Point)
+std::ostream& operator << (std::ostream &OS, const MTH::APoint &Point)
 {
     OS << "(" << Point.X << ", " << Point.Y << ")";
 

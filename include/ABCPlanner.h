@@ -5,9 +5,9 @@
 #ifndef ABC_PLANNER_H
 #define ABC_PLANNER_H
 
-#include "Planner.h"
+#include "BasePlanner.h"
 
-namespace Optimizer
+namespace MTH
 {
     namespace ABC
     {
@@ -23,16 +23,19 @@ namespace Optimizer
             int Trial;
         } ABee;
 
-        class AABCPlanner : public APlanner
+        class AABCPlanner : public ABasePlanner
         {
         public:
             AABCPlanner(const APoint &LowerBound, const APoint &UpperBound,
                         int MaximumIteration, int NPopulation, int NBreakpoint, int NWaypoint,
-                        PATH_TYPE PathType = CUBIC_SPLINE,
+                        INITIAL_POSITION_TYPE InitialPositionType = DISTRIBUTED,
+                        TRAJECTORY_TYPE TrajectoryType = CUBIC_SPLINE,
                         bool Log = true) :
-                    APlanner(LowerBound, UpperBound,
-                             MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
-                             PathType, Log)
+                        ABasePlanner(LowerBound, UpperBound,
+                                     MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
+                                     TrajectoryType),
+                        InitialPositionType_(InitialPositionType),
+                        Log_(Log)
             {
                 std::cout << "[INFO] ABC Planner instance created." << std::endl;
             }
@@ -77,10 +80,20 @@ namespace Optimizer
                     for (int VariableIndex = 0; VariableIndex < this->NBreakpoint_; VariableIndex++)
                     {
                         APoint RandomPosition;
-                        RandomPosition.X = GenerateRandom(this->LowerBound_.X,
-                                                          this->UpperBound_.X);
-                        RandomPosition.Y = GenerateRandom(this->LowerBound_.Y,
-                                                          this->UpperBound_.Y);
+
+                        switch (this->InitialPositionType_)
+                        {
+                            case DISTRIBUTED:
+                                RandomPosition = GenerateDistributedRandomPosition();
+                                break;
+
+                            case CIRCULAR:
+                                RandomPosition = GenerateCircularRandomPosition();
+                                break;
+
+                            default:
+                                RandomPosition = GenerateDistributedRandomPosition();
+                        }
 
                         Position[VariableIndex] = RandomPosition;
                     }
@@ -120,7 +133,7 @@ namespace Optimizer
 
                 double Length = 0.0f;
 
-                switch (this->PathType_)
+                switch (this->TrajectoryType_)
                 {
                     case LINEAR:
                         LinearPath(Length, Waypoint, X, Y);
@@ -146,12 +159,23 @@ namespace Optimizer
                 return SUCCESS;
             }
 
+            void Clear ()
+            {
+                this->FoodSource_.clear();
+
+                this->GlobalBestPosition_.clear();
+                this->GlobalBestCost_ = (double) INFINITY;
+            }
+
         private:
             int NEmployedBee_{}, NOnLookerBee_{}, NScoutBee = 1;
             int TrialLimit_{};
 
             std::vector<ABee> FoodSource_;
             double MaximumFitnessValue_ = -(double) INFINITY;
+
+            INITIAL_POSITION_TYPE InitialPositionType_;
+            bool Log_;
 
             void Optimize ()
             {
@@ -324,6 +348,6 @@ namespace Optimizer
             }
         };
     }
-} // Optimizer
+} // MTH
 
 #endif // ABC_PLANNER_H

@@ -2,8 +2,8 @@
 // Created by Sippawit Thammawiset on 17/2/2024 AD.
 //
 
-#ifndef PLANNER_H
-#define PLANNER_H
+#ifndef BASE_PLANNER_H
+#define BASE_PLANNER_H
 
 #include "Debug.h"
 #include "Utility.h"
@@ -15,28 +15,26 @@
 #include <random>
 #include <cmath>
 
-namespace Optimizer
+namespace MTH
 {
-    class APlanner
+    class ABasePlanner
     {
     public:
-        APlanner (const APoint &LowerBound, const APoint &UpperBound,
-                  int MaximumIteration, int NPopulation, int NBreakpoint, int NWaypoint,
-                  PATH_TYPE PathType = CUBIC_SPLINE,
-                  bool Log = true) :
-                  LowerBound_(LowerBound),
-                  UpperBound_(UpperBound),
-                  MaximumIteration_(MaximumIteration),
-                  NPopulation_(NPopulation),
-                  NBreakpoint_(NBreakpoint),
-                  NWaypoint_(NWaypoint),
-                  PathType_(PathType),
-                  Log_(Log)
+        ABasePlanner (const APoint &LowerBound, const APoint &UpperBound,
+                      int MaximumIteration, int NPopulation, int NBreakpoint, int NWaypoint,
+                      TRAJECTORY_TYPE TrajectoryType = CUBIC_SPLINE) :
+                      LowerBound_(LowerBound),
+                      UpperBound_(UpperBound),
+                      MaximumIteration_(MaximumIteration),
+                      NPopulation_(NPopulation),
+                      NBreakpoint_(NBreakpoint),
+                      NWaypoint_(NWaypoint),
+                      TrajectoryType_(TrajectoryType)
         {
 
         }
 
-        virtual ~APlanner() = default;
+        virtual ~ABasePlanner() = default;
 
         virtual bool CreatePlan (const unsigned char *CostMap,
                                  const APoint &Start,
@@ -78,8 +76,36 @@ namespace Optimizer
 
         double PathLength_ = 0.0f;
 
-        PATH_TYPE PathType_;
-        bool Log_;
+        TRAJECTORY_TYPE TrajectoryType_;
+
+        APoint GenerateDistributedRandomPosition ()
+        {
+            APoint RandomPosition;
+
+            RandomPosition.X = GenerateRandom(this->LowerBound_.X, this->UpperBound_.X);
+            RandomPosition.Y = GenerateRandom(this->LowerBound_.Y, this->UpperBound_.Y);
+
+            return RandomPosition;
+        }
+
+        APoint GenerateCircularRandomPosition ()
+        {
+            static double Radius = std::hypot(this->Start_->X - this->Goal_->X,
+                                              this->Start_->Y - this->Goal_->Y) / 2.0f;
+            static APoint Center = (*this->Goal_ + *this->Start_) / 2.0f;
+
+            double Angle = GenerateRandom(0.0f, 2.0f * M_PI);
+            double R = std::sqrt(GenerateRandom(0.0f, 1.0f)) * Radius;
+
+            APoint RandomPosition;
+            RandomPosition.X = Center.X + R * std::cos(Angle);
+            RandomPosition.Y = Center.Y + R * std::sin(Angle);
+
+            RandomPosition.X = CLAMP(RandomPosition.X, this->LowerBound_.X, this->UpperBound_.X);
+            RandomPosition.Y = CLAMP(RandomPosition.Y, this->LowerBound_.Y, this->UpperBound_.Y);
+
+            return RandomPosition;
+        }
 
         double ObjectiveFunction (const std::vector<APoint> &Position)
         {
@@ -90,7 +116,7 @@ namespace Optimizer
             double Length = 0.0f;
             std::vector<APoint> Waypoint;
 
-            switch (this->PathType_)
+            switch (this->TrajectoryType_)
             {
                 case LINEAR:
                     LinearPath(Length, Waypoint, X, Y);
@@ -231,6 +257,6 @@ namespace Optimizer
             return Penalty;
         }
     };
-} // Optimizer
+} // MTH
 
-#endif // PLANNER_H
+#endif // BASE_PLANNER_H

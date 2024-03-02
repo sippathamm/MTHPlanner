@@ -29,8 +29,8 @@ def create_image_from_cost_map(cost_map: str, map: str, splitter: str) -> None:
 
 
 def main() -> None:
-    cost_map = f'../out.txt'
-    map = f'../AStar.png'
+    cost_map = f'../map/turtlebot3_world.txt'
+    map = f'../map/turtlebot3_world.png'
 
     create_image_from_cost_map(cost_map, map, '\t')
 

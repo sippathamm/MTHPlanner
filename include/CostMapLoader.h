@@ -19,7 +19,8 @@ namespace CostMapLoader
     {
         SCENARIO_1 = 1,
         SCENARIO_2 = 2,
-        SCENARIO_3 = 3
+        SCENARIO_3 = 3,
+        TURTLEBOT3_WORLD = 4,
     };
 
     void ReadCostMap (const std::string& File, unsigned char *CostMap, int Width, int Height)
@@ -77,7 +78,7 @@ namespace CostMapLoader
     }
 
     unsigned char *CostMapLoader (int &Width, int &Height, COST_MAP_NAME CostMapName,
-                                  Optimizer::APoint &Start, Optimizer::APoint &Goal)
+                                  MTH::APoint &Start, MTH::APoint &Goal)
     {
         std::string CostMapFile;
 
@@ -89,8 +90,8 @@ namespace CostMapLoader
                 Width = 2000;
                 Height = 3000;
 
-                Start = Optimizer::APoint (404, 2402);
-                Goal = Optimizer::APoint (1722, 752);
+                Start = MTH::APoint (404, 2402);
+                Goal = MTH::APoint (1722, 752);
 
                 break;
 
@@ -100,8 +101,8 @@ namespace CostMapLoader
                 Width = 2000;
                 Height = 3000;
 
-                Start = Optimizer::APoint (250, 300);
-                Goal = Optimizer::APoint (1273, 2726);
+                Start = MTH::APoint (250, 300);
+                Goal = MTH::APoint (1273, 2726);
 
                 break;
 
@@ -111,8 +112,19 @@ namespace CostMapLoader
                 Width = 3000;
                 Height = 2000;
 
-                Start = Optimizer::APoint (400, 1850);
-                Goal = Optimizer::APoint (2444, 232);
+                Start = MTH::APoint (400, 1850);
+                Goal = MTH::APoint (2444, 232);
+
+                break;
+
+            case TURTLEBOT3_WORLD:
+                CostMapFile = "../map/turtlebot3_world.txt";
+
+                Width = 384;
+                Height = 384;
+
+                Start = MTH::APoint (211, 235);
+                Goal = MTH::APoint (171, 176);
 
                 break;
 
@@ -122,8 +134,8 @@ namespace CostMapLoader
                 Width = 2000;
                 Height = 3000;
 
-                Start = Optimizer::APoint (404, 2402);
-                Goal = Optimizer::APoint (1722, 752);
+                Start = MTH::APoint (404, 2402);
+                Goal = MTH::APoint (1722, 752);
         }
 
         auto *CostMap = new unsigned char [Width * Height];
