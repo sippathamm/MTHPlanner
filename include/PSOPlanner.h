@@ -6,17 +6,21 @@
 #define PSO_PLANNER_H
 
 #include "BasePlanner.h"
+#include <fstream>
 
 namespace MTH
 {
     namespace PSO
     {
-        enum
+        namespace VELOCITY_CONFINEMENT
         {
-            RANDOM_BACK = 0,
-            HYPERBOLIC = 1,
-            MIXED = 2
-        };
+            enum VELOCITY_CONFINEMENT
+            {
+                RANDOM_BACK = 0,
+                HYPERBOLIC = 1,
+                MIXED = 2
+            };
+        }
 
         typedef struct AParticle
         {
@@ -39,10 +43,10 @@ namespace MTH
                          int MaximumIteration, int NPopulation, int NBreakpoint, int NWaypoint,
                          double SocialCoefficient = 1.5f, double CognitiveCoefficient = 1.5f,
                          double MaximumInertialWeight = 0.9f, double MinimumInertialWeight = 0.4,
-                         int VelocityConfinement = RANDOM_BACK,
+                         int VelocityConfinement = VELOCITY_CONFINEMENT::RANDOM_BACK,
                          double VelocityFactor = 0.5,
-                         INITIAL_POSITION_TYPE InitialPositionType = DISTRIBUTED,
-                         TRAJECTORY_TYPE TrajectoryType = CUBIC_SPLINE,
+                         INITIAL_POSITION_TYPE InitialPositionType = INITIAL_POSITION::DISTRIBUTED,
+                         TRAJECTORY_TYPE TrajectoryType = TRAJECTORY::CUBIC_SPLINE,
                          bool Log = true) :
                          ABasePlanner(LowerBound, UpperBound,
                                       MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
@@ -92,12 +96,16 @@ namespace MTH
 
                         switch (this->InitialPositionType_)
                         {
-                            case DISTRIBUTED:
+                            case INITIAL_POSITION::DISTRIBUTED:
                                 RandomPosition = GenerateDistributedPosition();
                                 break;
 
-                            case CIRCULAR:
+                            case INITIAL_POSITION::CIRCULAR:
                                 RandomPosition = GenerateCircularPosition();
+                                break;
+
+                            case INITIAL_POSITION::LINEAR:
+                                RandomPosition = GenerateLinearPosition(BreakpointIndex);
                                 break;
 
                             default:
@@ -160,11 +168,11 @@ namespace MTH
 
                 switch (this->TrajectoryType_)
                 {
-                    case LINEAR:
+                    case TRAJECTORY::LINEAR:
                         LinearPath(Length, Waypoint, X, Y);
                         break;
 
-                    case CUBIC_SPLINE:
+                    case TRAJECTORY::CUBIC_SPLINE:
                         CubicSplinePath(Length, Waypoint, X, Y);
                         break;
 
@@ -176,12 +184,12 @@ namespace MTH
                 {
                     std::cerr << "[INFO] Path not found!" << std::endl;
 
-                    return FAILED;
+                    return STATE::FAILED;
                 }
 
                 this->PathLength_ = Length;
 
-                return SUCCESS;
+                return STATE::SUCCESS;
             }
 
             void Clear () override
@@ -321,16 +329,16 @@ namespace MTH
 
                     switch (this->VelocityConfinement_)
                     {
-                        case RANDOM_BACK:
+                        case VELOCITY_CONFINEMENT::RANDOM_BACK:
                             Confinement = RandomBackConfinement(CurrentPopulation->Velocity[BreakpointIndex]);
 
                             break;
-                        case HYPERBOLIC:
+                        case VELOCITY_CONFINEMENT::HYPERBOLIC:
                             Confinement = HyperbolicConfinement(CurrentPopulation->Position[BreakpointIndex],
                                                                 CurrentPopulation->Velocity[BreakpointIndex]);
 
                             break;
-                        case MIXED:
+                        case VELOCITY_CONFINEMENT::MIXED:
                             Confinement = MixedConfinement(CurrentPopulation->Position[BreakpointIndex],
                                                            CurrentPopulation->Velocity[BreakpointIndex]);
 

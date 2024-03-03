@@ -17,29 +17,39 @@ namespace MTH
     typedef int TRAJECTORY_TYPE;
     typedef int INITIAL_POSITION_TYPE;
 
-    enum
+    namespace STATE
     {
-        FAILED = 0,
-        SUCCESS = 1
-    };
+        enum STATE
+        {
+            FAILED = 0,
+            SUCCESS = 1
+        };
+    }
 
-    enum
+    namespace TRAJECTORY
     {
-        LINEAR = 0,
-        CUBIC_SPLINE = 1
-    };
+        enum TRAJECTORY
+        {
+            LINEAR = 0,
+            CUBIC_SPLINE = 1
+        };
+    }
 
-    enum
+    namespace INITIAL_POSITION
     {
-        DISTRIBUTED = 0,
-        CIRCULAR = 1
-    };
+        enum INITIAL_POSITION
+        {
+            DISTRIBUTED = 0,
+            LINEAR = 1,
+            CIRCULAR = 2,
+        };
+    }
 
     double GenerateRandom (double LowerBound = 0.0f, double UpperBound = 1.0f)
     {
         std::random_device Engine;
-        std::uniform_real_distribution<double> RandomDistribution(0.0f, 1.0f);
-        return LowerBound + RandomDistribution(Engine) * (UpperBound - LowerBound);
+        std::uniform_real_distribution<double> RandomDistribution(LowerBound, UpperBound);
+        return RandomDistribution(Engine);
     }
 
     int GenerateRandomIndex (int Index)

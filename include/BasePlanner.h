@@ -22,7 +22,7 @@ namespace MTH
     public:
         ABasePlanner (const APoint &LowerBound, const APoint &UpperBound,
                       int MaximumIteration, int NPopulation, int NBreakpoint, int NWaypoint,
-                      TRAJECTORY_TYPE TrajectoryType = CUBIC_SPLINE) :
+                      TRAJECTORY_TYPE TrajectoryType = TRAJECTORY::CUBIC_SPLINE) :
                       LowerBound_(LowerBound),
                       UpperBound_(UpperBound),
                       MaximumIteration_(MaximumIteration),
@@ -109,6 +109,17 @@ namespace MTH
             return RandomPosition;
         }
 
+        APoint GenerateLinearPosition (int BreakpointIndex)
+        {
+            double M = static_cast<double>(BreakpointIndex) / (this->NBreakpoint_ - 1);
+
+            APoint RandomPosition = *this->Start_ + (*this->Goal_ - *this->Start_) * M;
+            RandomPosition.X += GenerateRandom(-this->Range_.X * 0.05, this->Range_.X * 0.05);
+            RandomPosition.Y += GenerateRandom(-this->Range_.Y * 0.05, this->Range_.Y * 0.05);
+
+            return RandomPosition;
+        }
+
         double ObjectiveFunction (const std::vector<APoint> &Position)
         {
             auto Breakpoint = ConstructBreakpoint(Position);
@@ -120,11 +131,11 @@ namespace MTH
 
             switch (this->TrajectoryType_)
             {
-                case LINEAR:
+                case TRAJECTORY::LINEAR:
                     LinearPath(Length, Waypoint, X, Y);
                     break;
 
-                case CUBIC_SPLINE:
+                case TRAJECTORY::CUBIC_SPLINE:
                     CubicSplinePath(Length, Waypoint, X, Y);
                     break;
 
@@ -140,7 +151,7 @@ namespace MTH
             return Cost;
         }
 
-        std::pair<std::vector<double>, std::vector<double>> ConstructBreakpoint (const std::vector<APoint> &Breakpoint)
+        std::pair<std::vector<double>, std::vector<double>> ConstructBreakpoint (const std::vector<APoint> &Position)
         {
             std::vector<double> X(this->NBreakpoint_ + 2);
             std::vector<double> Y(this->NBreakpoint_ + 2);
@@ -150,8 +161,8 @@ namespace MTH
 
             for (int BreakpointIndex = 1; BreakpointIndex <= this->NBreakpoint_; BreakpointIndex++)
             {
-                X[BreakpointIndex] = Breakpoint[BreakpointIndex - 1].X;
-                Y[BreakpointIndex] = Breakpoint[BreakpointIndex - 1].Y;
+                X[BreakpointIndex] = Position[BreakpointIndex - 1].X;
+                Y[BreakpointIndex] = Position[BreakpointIndex - 1].Y;
             }
 
             X.back() = this->Goal_->X;

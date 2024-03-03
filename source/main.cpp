@@ -12,7 +12,7 @@ int main ()
 {
     int Width, Height;
     MTH::APoint Start, Goal;
-    int CostMapName = CostMapLoader::TURTLEBOT3_WORLD;
+    int CostMapName = CostMapLoader::MAP::SCENARIO_2;
 
     // Load cost map
     auto CostMap = CostMapLoader::CostMapLoader(Width, Height, CostMapName,
@@ -26,8 +26,8 @@ int main ()
     double MaximumWeight = 0.9f;
     double MinimumWeight = 0.4f;
     double VelocityFactor = 0.5;
-    MTH::INITIAL_POSITION_TYPE InitialPositionType = MTH::CIRCULAR;
-    MTH::TRAJECTORY_TYPE TrajectoryType = MTH::CUBIC_SPLINE;
+    MTH::INITIAL_POSITION_TYPE InitialPositionType = MTH::INITIAL_POSITION::CIRCULAR;
+    MTH::TRAJECTORY_TYPE TrajectoryType = MTH::TRAJECTORY::CUBIC_SPLINE;
     bool Log = true;
 
     MTH::APoint LowerBound(0.0f, 0.0f);
@@ -36,7 +36,7 @@ int main ()
     // PSO parameter configuration
     double SocialCoefficient = 2.0f;
     double CognitiveCoefficient = 1.3f;
-    int VelocityConfinement = MTH::PSO::HYPERBOLIC;
+    int VelocityConfinement = MTH::PSO::VELOCITY_CONFINEMENT::HYPERBOLIC;
 
     // GWO parameter configuration
     double Theta = 2.2f;
@@ -72,7 +72,7 @@ int main ()
                                      TrajectoryType,
                                      Log);
 
-    MTH::ABasePlanner *Planner = &PSOPlanner;
+    MTH::ABasePlanner *Planner = &ABCPlanner;
 
     for (int Run = 1; Run <= NRun; Run++)
     {

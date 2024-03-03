@@ -15,19 +15,23 @@ namespace CostMapLoader
 {
     typedef int COST_MAP_NAME;
 
-    enum
+    namespace MAP
     {
-        SCENARIO_1 = 1,
-        SCENARIO_2 = 2,
-        SCENARIO_3 = 3,
-        TURTLEBOT3_WORLD = 4,
-    };
+        enum MAP
+        {
+            SCENARIO_1 = 1,
+            SCENARIO_2 = 2,
+            SCENARIO_3 = 3,
+            TURTLEBOT3_WORLD = 4,
+            // Define your cost map name with ID here ...
+        };
+    }
 
     void ReadCostMap (const std::string& File, unsigned char *CostMap, int Width, int Height)
     {
-        std::ifstream ReadFile(File);
+        std::ifstream Reader(File);
 
-        if (!ReadFile.is_open())
+        if (!Reader.is_open())
         {
             std::cerr << "Error opening cost map file: " << File << std::endl;
             exit(EXIT_FAILURE);
@@ -37,7 +41,7 @@ namespace CostMapLoader
         {
             std::string Line;
 
-            if (std::getline(ReadFile, Line))
+            if (std::getline(Reader, Line))
             {
                 std::istringstream _(Line);
                 std::string Token;
@@ -62,7 +66,7 @@ namespace CostMapLoader
             }
         }
 
-        ReadFile.close();
+        Reader.close();
     }
 
     void DisplayCostMap (const unsigned char *CostMap, int Width, int Height)
@@ -84,7 +88,7 @@ namespace CostMapLoader
 
         switch (CostMapName)
         {
-            case SCENARIO_1:
+            case MAP::SCENARIO_1:
                 CostMapFile = "../map/scenario1.txt";
 
                 Width = 2000;
@@ -95,18 +99,18 @@ namespace CostMapLoader
 
                 break;
 
-            case SCENARIO_2:
+            case MAP::SCENARIO_2:
                 CostMapFile = "../map/scenario2.txt";
 
-                Width = 2000;
-                Height = 3000;
+                Width = 3000;
+                Height = 2000;
 
-                Start = MTH::APoint (250, 300);
-                Goal = MTH::APoint (1273, 2726);
+                Start = MTH::APoint (2619, 421);
+                Goal = MTH::APoint (301, 1193);
 
                 break;
 
-            case SCENARIO_3:
+            case MAP::SCENARIO_3:
                 CostMapFile = "../map/scenario3.txt";
 
                 Width = 3000;
@@ -117,7 +121,7 @@ namespace CostMapLoader
 
                 break;
 
-            case TURTLEBOT3_WORLD:
+            case MAP::TURTLEBOT3_WORLD:
                 CostMapFile = "../map/turtlebot3_world.txt";
 
                 Width = 384;
@@ -127,6 +131,8 @@ namespace CostMapLoader
                 Goal = MTH::APoint (171, 176);
 
                 break;
+
+            // Load your cost map here ...
 
             default:
                 CostMapFile = "../map/scenario2.txt";
@@ -144,7 +150,6 @@ namespace CostMapLoader
 
         return CostMap;
     }
-
-}
+} // CostMapLoader
 
 #endif // COST_MAP_LOADER_H

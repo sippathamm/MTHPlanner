@@ -29,8 +29,8 @@ def create_cost_map_from_image(map: str, cost_map: str) -> None:
 
 def main() -> None:
     map_directory = 'map'
-    map = f'../{map_directory}/environment2.png'
-    cost_map = f'../{map_directory}/environment2.txt'
+    map = f'../{map_directory}/scenario2.png'
+    cost_map = f'../{map_directory}/scenario2.txt'
 
     create_cost_map_from_image(map, cost_map)
 

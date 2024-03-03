@@ -35,8 +35,8 @@ namespace MTH
                          double Maximum_a = 2.2f, double Minimum_a = 0.02f,
                          double MaximumWeight = 0.9f, double MinimumWeight = 0.4f,
                          double VelocityFactor = 0.5f,
-                         INITIAL_POSITION_TYPE InitialPositionType = DISTRIBUTED,
-                         TRAJECTORY_TYPE TrajectoryType = CUBIC_SPLINE,
+                         INITIAL_POSITION_TYPE InitialPositionType = INITIAL_POSITION::DISTRIBUTED,
+                         TRAJECTORY_TYPE TrajectoryType = TRAJECTORY::CUBIC_SPLINE,
                          bool Log = true) :
                          ABasePlanner(LowerBound, UpperBound,
                                       MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
@@ -86,12 +86,16 @@ namespace MTH
 
                         switch (this->InitialPositionType_)
                         {
-                            case DISTRIBUTED:
+                            case INITIAL_POSITION::DISTRIBUTED:
                                 RandomPosition = GenerateDistributedPosition();
                                 break;
 
-                            case CIRCULAR:
+                            case INITIAL_POSITION::CIRCULAR:
                                 RandomPosition = GenerateCircularPosition();
+                                break;
+
+                            case INITIAL_POSITION::LINEAR:
+                                RandomPosition = GenerateLinearPosition(BreakpointIndex);
                                 break;
 
                             default:
@@ -144,11 +148,11 @@ namespace MTH
 
                 switch (this->TrajectoryType_)
                 {
-                    case LINEAR:
+                    case TRAJECTORY::LINEAR:
                         LinearPath(Length, Waypoint, X, Y);
                         break;
 
-                    case CUBIC_SPLINE:
+                    case TRAJECTORY::CUBIC_SPLINE:
                         CubicSplinePath(Length, Waypoint, X, Y);
                         break;
 
@@ -160,14 +164,14 @@ namespace MTH
                 {
                     std::cerr << "[INFO] Path not found!" << std::endl;
 
-                    return FAILED;
+                    return STATE::FAILED;
                 }
 
                 this->PathLength_ = Length;
                 ABasePlanner::GlobalBestPosition_ = this->GlobalBestPosition_.Alpha.Position;
                 ABasePlanner::GlobalBestCost_ = this->GlobalBestPosition_.Alpha.Cost;
 
-                return SUCCESS;
+                return STATE::SUCCESS;
             }
 
             void Clear () override

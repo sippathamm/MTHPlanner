@@ -28,8 +28,8 @@ namespace MTH
         public:
             AABCPlanner(const APoint &LowerBound, const APoint &UpperBound,
                         int MaximumIteration, int NPopulation, int NBreakpoint, int NWaypoint,
-                        INITIAL_POSITION_TYPE InitialPositionType = DISTRIBUTED,
-                        TRAJECTORY_TYPE TrajectoryType = CUBIC_SPLINE,
+                        INITIAL_POSITION_TYPE InitialPositionType = INITIAL_POSITION::DISTRIBUTED,
+                        TRAJECTORY_TYPE TrajectoryType = TRAJECTORY::CUBIC_SPLINE,
                         bool Log = true) :
                         ABasePlanner(LowerBound, UpperBound,
                                      MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
@@ -41,16 +41,6 @@ namespace MTH
             }
 
             ~AABCPlanner () override = default;
-
-            static double FitnessFunction (double Cost)
-            {
-                if (Cost >= 0)
-                {
-                    return 1.0f / (1.0f + Cost);
-                }
-
-                return 1.0f + abs(Cost);
-            }
 
             bool CreatePlan (const unsigned char *CostMap,
                              const APoint &Start,
@@ -77,25 +67,29 @@ namespace MTH
 
                     std::vector<APoint> Position(this->NBreakpoint_);
 
-                    for (int VariableIndex = 0; VariableIndex < this->NBreakpoint_; VariableIndex++)
+                    for (int BreakpointIndex = 0; BreakpointIndex < this->NBreakpoint_; BreakpointIndex++)
                     {
                         APoint RandomPosition;
 
                         switch (this->InitialPositionType_)
                         {
-                            case DISTRIBUTED:
+                            case INITIAL_POSITION::DISTRIBUTED:
                                 RandomPosition = GenerateDistributedPosition();
                                 break;
 
-                            case CIRCULAR:
+                            case INITIAL_POSITION::CIRCULAR:
                                 RandomPosition = GenerateCircularPosition();
+                                break;
+
+                            case INITIAL_POSITION::LINEAR:
+                                RandomPosition = GenerateLinearPosition(BreakpointIndex);
                                 break;
 
                             default:
                                 RandomPosition = GenerateDistributedPosition();
                         }
 
-                        Position[VariableIndex] = RandomPosition;
+                        Position[BreakpointIndex] = RandomPosition;
                     }
 
                     CurrentEmployedBee->Position = Position;
@@ -135,11 +129,11 @@ namespace MTH
 
                 switch (this->TrajectoryType_)
                 {
-                    case LINEAR:
+                    case TRAJECTORY::LINEAR:
                         LinearPath(Length, Waypoint, X, Y);
                         break;
 
-                    case CUBIC_SPLINE:
+                    case TRAJECTORY::CUBIC_SPLINE:
                         CubicSplinePath(Length, Waypoint, X, Y);
                         break;
 
@@ -151,12 +145,12 @@ namespace MTH
                 {
                     std::cerr << "[INFO] Path not found!" << std::endl;
 
-                    return FAILED;
+                    return STATE::FAILED;
                 }
 
                 this->PathLength_ = Length;
 
-                return SUCCESS;
+                return STATE::SUCCESS;
             }
 
             void Clear () override
@@ -174,6 +168,16 @@ namespace MTH
 
             INITIAL_POSITION_TYPE InitialPositionType_;
             bool Log_;
+
+            static double FitnessFunction (double Cost)
+            {
+                if (Cost >= 0)
+                {
+                    return 1.0f / (1.0f + Cost);
+                }
+
+                return 1.0f + abs(Cost);
+            }
 
             void Optimize ()
             {
@@ -206,7 +210,8 @@ namespace MTH
                     do
                     {
                         PartnerBeeIndex = GenerateRandomIndex(this->NEmployedBee_);
-                    } while (PartnerBeeIndex == EmployedBeeIndex);
+                    }
+                    while (PartnerBeeIndex == EmployedBeeIndex);
 
                     std::vector<APoint> UpdatedPosition = CurrentEmployedBee->Position;
 
@@ -232,7 +237,8 @@ namespace MTH
                         CurrentEmployedBee->Cost = Cost;
                         CurrentEmployedBee->FitnessValue = FitnessValue;
                         CurrentEmployedBee->Trial = 0;
-                    } else
+                    }
+                    else
                     {
                         CurrentEmployedBee->Trial++;
                     }
@@ -270,7 +276,8 @@ namespace MTH
                         do
                         {
                             PartnerBeeIndex = GenerateRandomIndex(this->NEmployedBee_);
-                        } while (PartnerBeeIndex == EmployedBeeIndex);
+                        }
+                        while (PartnerBeeIndex == EmployedBeeIndex);
 
                         std::vector<APoint> UpdatedPosition = CurrentEmployedBee->Position;
 
@@ -296,7 +303,8 @@ namespace MTH
                             CurrentEmployedBee->Cost = Cost;
                             CurrentEmployedBee->FitnessValue = FitnessValue;
                             CurrentEmployedBee->Trial = 0;
-                        } else
+                        }
+                        else
                         {
                             CurrentEmployedBee->Trial++;
                         }
@@ -320,7 +328,7 @@ namespace MTH
                         {
                             std::vector<APoint> Position(this->NBreakpoint_);
 
-                            for (int VariableIndex = 0; VariableIndex < this->NBreakpoint_; VariableIndex++)
+                            for (int BreakpointIndex = 0; BreakpointIndex < this->NBreakpoint_; BreakpointIndex++)
                             {
                                 APoint RandomPosition;
                                 RandomPosition.X = GenerateRandom(this->LowerBound_.X,
@@ -328,7 +336,7 @@ namespace MTH
                                 RandomPosition.Y = GenerateRandom(this->LowerBound_.Y,
                                                                   this->UpperBound_.Y);
 
-                                Position[VariableIndex] = RandomPosition;
+                                Position[BreakpointIndex] = RandomPosition;
                             }
 
                             CurrentEmployedBee->Position = Position;
