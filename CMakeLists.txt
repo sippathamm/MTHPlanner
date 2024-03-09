@@ -9,9 +9,9 @@ add_executable(GlobalPlanner
         include/ABCPlanner.h
         include/BasePlanner.h
         include/CostMapLoader.h
-        include/Debug.h
         include/GWOPlanner.h
         include/Point.h
+        include/Print.h
         include/PSOPlanner.h
         include/spline.h
         include/Utility.h

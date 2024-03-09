@@ -37,7 +37,7 @@ namespace MTH
                         InitialPositionType_(InitialPositionType),
                         Log_(Log)
             {
-                std::cout << "[INFO] ABC Planner instance created." << std::endl;
+                std::cout << "[INFO] ABC Planner instance has been created." << std::endl;
             }
 
             ~AABCPlanner () override = default;
@@ -107,6 +107,8 @@ namespace MTH
                     }
                 }
 
+                std::cout << "[INFO] ABC Planner starts optimizing." << std::endl;
+
                 // Optimize
                 for (int Iteration = 1; Iteration <= this->MaximumIteration_; Iteration++)
                 {
@@ -114,8 +116,10 @@ namespace MTH
 
                     if (this->Log_)
                     {
-                        std::cout << "[INFO] Iteration: " << Iteration << " >>> "
-                                  << "Best Cost: " << this->GlobalBestCost_ << std::endl;
+                        std::cout << "[INFO] Iteration: " << Iteration << " >>> \n\t"
+                                  << "Best Cost: " << this->GlobalBestCost_ << " \n\t"
+                                  << "Best Position: " << this->GlobalBestPosition_ <<
+                                  std::endl;
                     }
                 }
 

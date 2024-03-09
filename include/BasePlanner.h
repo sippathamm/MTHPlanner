@@ -5,7 +5,7 @@
 #ifndef BASE_PLANNER_H
 #define BASE_PLANNER_H
 
-#include "Debug.h"
+#include "Print.h"
 #include "Utility.h"
 #include "Point.h"
 #include "spline.h"

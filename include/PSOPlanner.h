@@ -142,6 +142,8 @@ namespace MTH
 
                 this->AverageCost_ /= this->NPopulation_;
 
+                std::cout << "[INFO] PSO Planner starts optimizing." << std::endl;
+
                 // Optimize
                 for (int Iteration = 1; Iteration <= this->MaximumIteration_; Iteration++)
                 {
@@ -153,8 +155,10 @@ namespace MTH
 
                     if (this->Log_)
                     {
-                        std::cout << "[INFO] Iteration: " << Iteration << " >>> "
-                                  << "Best Cost: " << this->GlobalBestCost_ << std::endl;
+                        std::cout << "[INFO] Iteration: " << Iteration << " >>> \n\t"
+                                  << "Best Cost: " << this->GlobalBestCost_ << " \n\t"
+                                  << "Best Position: " << this->GlobalBestPosition_ <<
+                                  std::endl;
                     }
                 }
 
