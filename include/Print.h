@@ -7,9 +7,10 @@
 
 #include "Point.h"
 
+#include <vector>
 #include <ostream>
 
-std::ostream& operator << (std::ostream &OS, const std::vector<MTH::APoint> &Position)
+std::ostream & operator << (std::ostream &OS, const std::vector<MTH::APoint> &Position)
 {
     OS << "[";
     for (const auto &i : Position)
@@ -21,7 +22,20 @@ std::ostream& operator << (std::ostream &OS, const std::vector<MTH::APoint> &Pos
     return OS;
 }
 
-std::ostream& operator << (std::ostream &OS, const MTH::APoint &Point)
+template <typename T>
+std::ostream & operator << (std::ostream &OS, const std::vector<T> &Vector)
+{
+    OS << "[";
+    for (const auto &i : Vector)
+    {
+        OS << i << ", ";
+    }
+    OS << "]";
+
+    return OS;
+}
+
+std::ostream & operator << (std::ostream &OS, const MTH::APoint &Point)
 {
     OS << "(" << Point.X << ", " << Point.Y << ")";
 

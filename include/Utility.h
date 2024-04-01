@@ -10,7 +10,7 @@
 #define LETHAL_COST                             253
 
 #define CLAMP(X, MIN, MAX)                      std::max(MIN, std::min(MAX, X))
-#define IS_OUT_OF_BOUND(X, MIN, MAX)            X <= MIN || X >= MAX
+#define IS_OUT_OF_BOUND(X, MIN, MAX)            X < MIN || X > MAX
 
 namespace MTH
 {
@@ -55,7 +55,7 @@ namespace MTH
     int GenerateRandomIndex (int Index)
     {
         std::random_device Engine;
-        std::uniform_int_distribution<int> RandomDistribution(0, Index - 1);
+        std::uniform_int_distribution<int> RandomDistribution(0, Index);
         return RandomDistribution(Engine);
     }
 

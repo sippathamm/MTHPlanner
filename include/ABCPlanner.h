@@ -26,7 +26,7 @@ namespace MTH
         class AABCPlanner : public ABasePlanner
         {
         public:
-            AABCPlanner(const APoint &LowerBound, const APoint &UpperBound,
+            AABCPlanner (const APoint &LowerBound, const APoint &UpperBound,
                         int MaximumIteration, int NPopulation, int NBreakpoint, int NWaypoint,
                         INITIAL_POSITION_TYPE InitialPositionType = INITIAL_POSITION::DISTRIBUTED,
                         TRAJECTORY_TYPE TrajectoryType = TRAJECTORY::CUBIC_SPLINE,
@@ -55,19 +55,19 @@ namespace MTH
                 this->Range_ = this->UpperBound_ - this->LowerBound_;
                 this->N_ = static_cast<int>(this->Range_.X * this->Range_.Y);
 
-                this->NEmployedBee_ = this->NPopulation_ / 2;
+                this->NEmployedBee_ = this->NPopulation_ * 0.5f;
                 this->NOnLookerBee_ = this->NEmployedBee_;
-                this->TrialLimit_ = this->NPopulation_ * this->NBreakpoint_ / 2;
+                this->TrialLimit_ = this->NPopulation_ * this->NBreakpoint_ * 0.5f;
 
                 this->FoodSource_ = std::vector<ABee>(this->NEmployedBee_);
 
-                for (int EmployedBeeIndex = 0; EmployedBeeIndex < this->NEmployedBee_; EmployedBeeIndex++)
+                for (int EmployedBeeIndex = 0; EmployedBeeIndex < this->NEmployedBee_; ++EmployedBeeIndex)
                 {
                     auto *CurrentEmployedBee = &this->FoodSource_[EmployedBeeIndex];
 
                     std::vector<APoint> Position(this->NBreakpoint_);
 
-                    for (int BreakpointIndex = 0; BreakpointIndex < this->NBreakpoint_; BreakpointIndex++)
+                    for (int BreakpointIndex = 0; BreakpointIndex < this->NBreakpoint_; ++BreakpointIndex)
                     {
                         APoint RandomPosition;
 
@@ -110,9 +110,11 @@ namespace MTH
                 std::cout << "[INFO] ABC Planner starts optimizing." << std::endl;
 
                 // Optimize
-                for (int Iteration = 1; Iteration <= this->MaximumIteration_; Iteration++)
+                for (int Iteration = 1; Iteration <= this->MaximumIteration_; ++Iteration)
                 {
                     Optimize();
+
+                    this->Convergence_.push_back(this->GlobalBestCost_);
 
                     if (this->Log_)
                     {
@@ -160,7 +162,9 @@ namespace MTH
             void Clear () override
             {
                 this->GlobalBestPosition_.clear();
-                this->GlobalBestCost_ = (double) INFINITY;
+                this->GlobalBestCost_ = 2e10;
+
+                this->Convergence_.clear();
             }
 
         private:
@@ -168,7 +172,7 @@ namespace MTH
             int TrialLimit_{};
 
             std::vector<ABee> FoodSource_;
-            double MaximumFitnessValue_ = -(double) INFINITY;
+            double MaximumFitnessValue_ = -(double) 2e10;
 
             INITIAL_POSITION_TYPE InitialPositionType_;
             bool Log_;
@@ -190,7 +194,7 @@ namespace MTH
                 SendOnLookerBee();
                 SendScoutBee();
 
-                for (int EmployedBeeIndex = 0; EmployedBeeIndex < this->NEmployedBee_; EmployedBeeIndex++)
+                for (int EmployedBeeIndex = 0; EmployedBeeIndex < this->NEmployedBee_; ++EmployedBeeIndex)
                 {
                     auto *CurrentEmployedBee = &this->FoodSource_[EmployedBeeIndex];
 
@@ -204,16 +208,16 @@ namespace MTH
 
             void SendEmployedBee ()
             {
-                for (int EmployedBeeIndex = 0; EmployedBeeIndex < this->NEmployedBee_; EmployedBeeIndex++)
+                for (int EmployedBeeIndex = 0; EmployedBeeIndex < this->NEmployedBee_; ++EmployedBeeIndex)
                 {
                     auto *CurrentEmployedBee = &this->FoodSource_[EmployedBeeIndex];
 
-                    int BreakpointIndex = GenerateRandomIndex(this->NBreakpoint_);
+                    int BreakpointIndex = GenerateRandomIndex(this->NBreakpoint_ - 1);
                     int PartnerBeeIndex;
 
                     do
                     {
-                        PartnerBeeIndex = GenerateRandomIndex(this->NEmployedBee_);
+                        PartnerBeeIndex = GenerateRandomIndex(this->NEmployedBee_ - 1);
                     }
                     while (PartnerBeeIndex == EmployedBeeIndex);
 
@@ -221,7 +225,7 @@ namespace MTH
 
                     UpdatedPosition[BreakpointIndex] = CurrentEmployedBee->Position[BreakpointIndex] +
                                                        (CurrentEmployedBee->Position[BreakpointIndex] -
-                                                        this->FoodSource_[PartnerBeeIndex].Position[BreakpointIndex]) *
+                                                       this->FoodSource_[PartnerBeeIndex].Position[BreakpointIndex]) *
                                                        ((GenerateRandom(0.0f, 1.0f) - 0.5f) * 2);
 
                     UpdatedPosition[BreakpointIndex].X = CLAMP(UpdatedPosition[BreakpointIndex].X,
@@ -254,7 +258,7 @@ namespace MTH
 
             void CalculateProbability ()
             {
-                for (int EmployedBeeIndex = 0; EmployedBeeIndex < this->NEmployedBee_; EmployedBeeIndex++)
+                for (int EmployedBeeIndex = 0; EmployedBeeIndex < this->NEmployedBee_; ++EmployedBeeIndex)
                 {
                     auto *CurrentEmployedBee = &this->FoodSource_[EmployedBeeIndex];
 
@@ -274,12 +278,12 @@ namespace MTH
 
                     if (RandomProbability < CurrentEmployedBee->Probability)
                     {
-                        int BreakpointIndex = GenerateRandomIndex(this->NBreakpoint_);
+                        int BreakpointIndex = GenerateRandomIndex(this->NBreakpoint_ - 1);
                         int PartnerBeeIndex;
 
                         do
                         {
-                            PartnerBeeIndex = GenerateRandomIndex(this->NEmployedBee_);
+                            PartnerBeeIndex = GenerateRandomIndex(this->NEmployedBee_ - 1);
                         }
                         while (PartnerBeeIndex == EmployedBeeIndex);
 
@@ -287,7 +291,7 @@ namespace MTH
 
                         UpdatedPosition[BreakpointIndex] = CurrentEmployedBee->Position[BreakpointIndex] +
                                                            (CurrentEmployedBee->Position[BreakpointIndex] -
-                                                            this->FoodSource_[PartnerBeeIndex].Position[BreakpointIndex]) *
+                                                           this->FoodSource_[PartnerBeeIndex].Position[BreakpointIndex]) *
                                                            ((GenerateRandom(0.0f, 1.0f) - 0.5f) * 2);
 
                         UpdatedPosition[BreakpointIndex].X = CLAMP(UpdatedPosition[BreakpointIndex].X,
@@ -322,9 +326,9 @@ namespace MTH
 
             void SendScoutBee ()
             {
-                for (int ScoutBeeIndex = 0; ScoutBeeIndex < this->NScoutBee; ScoutBeeIndex++)
+                for (int ScoutBeeIndex = 0; ScoutBeeIndex < this->NScoutBee; ++ScoutBeeIndex)
                 {
-                    for (int EmployedBeeIndex = 0; EmployedBeeIndex < this->NEmployedBee_; EmployedBeeIndex++)
+                    for (int EmployedBeeIndex = 0; EmployedBeeIndex < this->NEmployedBee_; ++EmployedBeeIndex)
                     {
                         auto *CurrentEmployedBee = &this->FoodSource_[EmployedBeeIndex];
 
@@ -332,13 +336,11 @@ namespace MTH
                         {
                             std::vector<APoint> Position(this->NBreakpoint_);
 
-                            for (int BreakpointIndex = 0; BreakpointIndex < this->NBreakpoint_; BreakpointIndex++)
+                            for (int BreakpointIndex = 0; BreakpointIndex < this->NBreakpoint_; ++BreakpointIndex)
                             {
                                 APoint RandomPosition;
-                                RandomPosition.X = GenerateRandom(this->LowerBound_.X,
-                                                                  this->UpperBound_.X);
-                                RandomPosition.Y = GenerateRandom(this->LowerBound_.Y,
-                                                                  this->UpperBound_.Y);
+                                RandomPosition.X = GenerateRandom(this->LowerBound_.X, this->UpperBound_.X);
+                                RandomPosition.Y = GenerateRandom(this->LowerBound_.Y, this->UpperBound_.Y);
 
                                 Position[BreakpointIndex] = RandomPosition;
                             }

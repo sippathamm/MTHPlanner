@@ -56,7 +56,12 @@ namespace MTH
             return this->PathLength_;
         }
 
-        virtual void Clear ()  = 0;
+        std::vector<double> GetConvergence ()
+        {
+            return this->Convergence_;
+        }
+
+        virtual void Clear () = 0;
 
     protected:
         APoint LowerBound_, UpperBound_;
@@ -74,13 +79,14 @@ namespace MTH
         int N_{};
 
         std::vector<APoint> GlobalBestPosition_;
-        double GlobalBestCost_ = (double) INFINITY;
+        double GlobalBestCost_ = 2e10;
 
         double PathLength_ = 0.0f;
 
         TRAJECTORY_TYPE TrajectoryType_;
+        std::vector<double> Convergence_;
 
-        APoint GenerateDistributedPosition ()
+        APoint GenerateDistributedPosition () const
         {
             APoint RandomPosition;
 
@@ -93,15 +99,16 @@ namespace MTH
         APoint GenerateCircularPosition ()
         {
             static double Radius = std::hypot(this->Start_->X - this->Goal_->X,
-                                              this->Start_->Y - this->Goal_->Y) / 2.0f;
-            static APoint Center = (*this->Goal_ + *this->Start_) / 2.0f;
+                                              this->Start_->Y - this->Goal_->Y) * 0.5f;
+            static APoint Center = (*this->Goal_ + *this->Start_) * 0.5f;
 
             double Angle = GenerateRandom(0.0f, 2.0f * M_PI);
-            double R = std::sqrt(GenerateRandom(0.0f, 1.0f)) * Radius;
+            double RandomRadius = std::sqrt(GenerateRandom(0.0f, 1.0f)) * Radius;
 
             APoint RandomPosition;
-            RandomPosition.X = Center.X + R * std::cos(Angle);
-            RandomPosition.Y = Center.Y + R * std::sin(Angle);
+
+            RandomPosition.X = Center.X + RandomRadius * std::cos(Angle);
+            RandomPosition.Y = Center.Y + RandomRadius * std::sin(Angle);
 
             RandomPosition.X = CLAMP(RandomPosition.X, this->LowerBound_.X, this->UpperBound_.X);
             RandomPosition.Y = CLAMP(RandomPosition.Y, this->LowerBound_.Y, this->UpperBound_.Y);
@@ -114,8 +121,9 @@ namespace MTH
             double M = static_cast<double>(BreakpointIndex) / (this->NBreakpoint_ - 1);
 
             APoint RandomPosition = *this->Start_ + (*this->Goal_ - *this->Start_) * M;
-            RandomPosition.X += GenerateRandom(-this->Range_.X * 0.05, this->Range_.X * 0.05);
-            RandomPosition.Y += GenerateRandom(-this->Range_.Y * 0.05, this->Range_.Y * 0.05);
+
+            RandomPosition.X += GenerateRandom(-this->Range_.X * 0.05f, this->Range_.X * 0.05f);
+            RandomPosition.Y += GenerateRandom(-this->Range_.Y * 0.05f, this->Range_.Y * 0.05f);
 
             return RandomPosition;
         }
@@ -143,8 +151,7 @@ namespace MTH
                     CubicSplinePath(Length, Waypoint, X, Y);
             }
 
-            double Error = Penalty(Waypoint);
-            Error = (Error == 0.0f ? 0.0f : this->PenaltyScalingFactor_ * Error);
+            double Error = Penalty(Waypoint) * this->PenaltyScalingFactor_;
 
             double Cost = this->CostScalingFactor_ * Length * (1.0f + Error);
 
@@ -159,7 +166,7 @@ namespace MTH
             X.front() = this->Start_->X;
             Y.front() = this->Start_->Y;
 
-            for (int BreakpointIndex = 1; BreakpointIndex <= this->NBreakpoint_; BreakpointIndex++)
+            for (int BreakpointIndex = 1; BreakpointIndex <= this->NBreakpoint_; ++BreakpointIndex)
             {
                 X[BreakpointIndex] = Position[BreakpointIndex - 1].X;
                 Y[BreakpointIndex] = Position[BreakpointIndex - 1].Y;
@@ -169,6 +176,30 @@ namespace MTH
             Y.back() = this->Goal_->Y;
 
             return {X, Y};
+        }
+
+        void LinearPath (double &Length,
+                         std::vector<APoint> &Waypoint,
+                         const std::vector<double> &X,
+                         const std::vector<double> &Y) const
+        {
+            int NInterpolationPoint = (this->NWaypoint_ - 1) / (this->NBreakpoint_ + 1);
+
+            Waypoint.clear();
+            Waypoint.emplace_back(X.front(), Y.front());
+
+            for (int i = 1; i < this->NBreakpoint_ + 2; ++i)
+            {
+                std::vector<double> InterpolationX = LinearInterpolation(X[i - 1], X[i], NInterpolationPoint);
+                std::vector<double> InterpolationY = LinearInterpolation(Y[i - 1], Y[i], NInterpolationPoint);
+
+                for (int j = 0; j < NInterpolationPoint; ++j)
+                {
+                    Waypoint.emplace_back(InterpolationX[j], InterpolationY[j]);
+                }
+            }
+
+            CalculateLength(Length, Waypoint);
         }
 
         void CubicSplinePath (double &Length,
@@ -185,47 +216,20 @@ namespace MTH
 
             Waypoint.clear();
 
-            for (int WaypointIndex = 0; WaypointIndex < this->NWaypoint_; WaypointIndex++)
+            for (int WaypointIndex = 0; WaypointIndex < this->NWaypoint_; ++WaypointIndex)
             {
                 double XInterpolation = CubicSplineX(Interpolation[WaypointIndex]);
                 double YInterpolation = CubicSplineY(Interpolation[WaypointIndex]);
 
                 Waypoint.emplace_back(XInterpolation, YInterpolation);
-
-                CalculateLength(Length, Waypoint, WaypointIndex);
             }
+
+            CalculateLength(Length, Waypoint);
         }
 
-        void LinearPath (double &Length,
-                         std::vector<APoint> &Waypoint,
-                         const std::vector<double> &X,
-                         const std::vector<double> &Y) const
+        void CalculateLength (double &Length, const std::vector<APoint> &Waypoint) const
         {
-            int NInterpolationPoint = (this->NWaypoint_ - 1) / (this->NBreakpoint_ + 1);
-
-            Waypoint.clear();
-            Waypoint.emplace_back(X[0], Y[0]);
-
-            for (int i = 1; i < this->NBreakpoint_ + 2; i++)
-            {
-                std::vector<double> InterpolationX = LinearInterpolation(X[i - 1], X[i], NInterpolationPoint);
-                std::vector<double> InterpolationY = LinearInterpolation(Y[i - 1], Y[i], NInterpolationPoint);
-
-                for (int j = 0; j < NInterpolationPoint; j++)
-                {
-                    Waypoint.emplace_back(InterpolationX[j], InterpolationY[j]);
-                }
-            }
-
-            for (int WaypointIndex = 0; WaypointIndex < this->NWaypoint_; WaypointIndex++)
-            {
-                CalculateLength(Length, Waypoint, WaypointIndex);
-            }
-        }
-
-        static void CalculateLength (double &Length, const std::vector<APoint> &Waypoint, int WaypointIndex)
-        {
-            if (WaypointIndex >= 1)
+            for (int WaypointIndex = 1; WaypointIndex < this->NWaypoint_; ++WaypointIndex)
             {
                 double DX = Waypoint[WaypointIndex].X - Waypoint[WaypointIndex - 1].X;
                 double DY = Waypoint[WaypointIndex].Y - Waypoint[WaypointIndex - 1].Y;
@@ -244,19 +248,22 @@ namespace MTH
             int NInterpolationPoint = (this->NWaypoint_ - 1) / (this->NBreakpoint_ + 1);
             double Penalty = 0.0f;
 
-            for (int WaypointIndex = 0; WaypointIndex < this->NWaypoint_; WaypointIndex++)
+            for (int WaypointIndex = 0; WaypointIndex < this->NWaypoint_; ++WaypointIndex)
             {
                 int X = static_cast<int>(Waypoint[WaypointIndex].X);
                 int Y = static_cast<int>(Waypoint[WaypointIndex].Y);
 
                 int Index = XYToIndex(X, Y);
 
-                if (Index < 0 || Index >= this->N_ || this->CostMap_[Index] >= static_cast<int>(this->ObstacleCostFactor_ * LETHAL_COST))
+                if (Index < 0 || Index >= this->N_ || 
+                    this->CostMap_[Index] >= static_cast<int>(this->ObstacleCostFactor_ * LETHAL_COST))
                 {
                     if (WaypointIndex == BreakpointIndex)
                     {
                         Penalty += 100.0f;
-                    } else {
+                    } 
+                    else 
+                    {
                         Penalty += 20.0;
                     }
                 }

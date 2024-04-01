@@ -5,27 +5,27 @@
 #include "Print.h"
 #include "CostMapLoader.h"
 #include "ABCPlanner.h"
-#include "PSOPlanner.h"
-#include "GWOPlanner.h"
+#include "IPSOPlanner.h"
+#include "IGWOPlanner.h"
 
 int main ()
 {
     int Width, Height;
     MTH::APoint Start, Goal;
-    int CostMapName = CostMapLoader::MAP::SCENARIO_2;
+    int CostMapName = CostMapLoader::MAP::TURTLEBOT3_WORLD;   // Change to your map here
 
     // Load cost map
     auto CostMap = CostMapLoader::CostMapLoader(Width, Height, CostMapName,
                                                               Start, Goal);
-    // Global parameter configuration
+    // Global parameters configuration
     int MaximumIteration = 100;
-    int NPopulation = 50;
-    int NBreakpoint = 3;
-    int NInterpolationPoint = 30;
+    int NPopulation = 100;
+    int NBreakpoint = 6;
+    int NInterpolationPoint = 5;
     int NWaypoint = 1 + (NBreakpoint + 1) * NInterpolationPoint;
     double MaximumWeight = 0.9f;
     double MinimumWeight = 0.4f;
-    double VelocityFactor = 0.5;
+    double VelocityFactor = 0.5f;
     MTH::INITIAL_POSITION_TYPE InitialPositionType = MTH::INITIAL_POSITION::CIRCULAR;
     MTH::TRAJECTORY_TYPE TrajectoryType = MTH::TRAJECTORY::CUBIC_SPLINE;
     bool Log = true;
@@ -33,12 +33,12 @@ int main ()
     MTH::APoint LowerBound(0.0f, 0.0f);
     MTH::APoint UpperBound(Width, Height);
 
-    // PSO parameter configuration
+    // PSO parameters configuration
     double SocialCoefficient = 2.0f;
     double CognitiveCoefficient = 1.3f;
-    int VelocityConfinement = MTH::PSO::VELOCITY_CONFINEMENT::HYPERBOLIC;
+    int VelocityConfinement = MTH::IPSO::VELOCITY_CONFINEMENT::HYPERBOLIC;
 
-    // GWO parameter configuration
+    // GWO parameters configuration
     double Theta = 2.2f;
     double K = 1.5f;
     double Maximum_a = 2.2f;
@@ -46,7 +46,7 @@ int main ()
 
     int NRun = 1;
 
-    MTH::PSO::APSOPlanner PSOPlanner(LowerBound, UpperBound,
+    MTH::IPSO::AIPSOPlanner IPSOPlanner(LowerBound, UpperBound,
                                      MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
                                      SocialCoefficient, CognitiveCoefficient,
                                      MaximumWeight, MinimumWeight,
@@ -56,7 +56,7 @@ int main ()
                                      TrajectoryType,
                                      Log);
 
-    MTH::GWO::AGWOPlanner GWOPlanner(LowerBound, UpperBound,
+    MTH::IGWO::AIGWOPlanner IGWOPlanner(LowerBound, UpperBound,
                                      MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
                                      Theta, K,
                                      Maximum_a, Minimum_a,
@@ -74,7 +74,7 @@ int main ()
 
     MTH::ABasePlanner *Planner = &ABCPlanner;
 
-    for (int Run = 1; Run <= NRun; Run++)
+    for (int Run = 1; Run <= NRun; ++Run)
     {
         std::vector<MTH::APoint> Waypoint;
 
@@ -84,6 +84,7 @@ int main ()
             auto StopTime = std::chrono::high_resolution_clock::now();
             auto Duration = std::chrono::duration_cast<std::chrono::milliseconds>(StopTime - StartTime);
 
+            std::cout << "Convergence rate: " << Planner->GetConvergence() << std::endl;
             std::cout << "Breakpoint: " << Planner->GetGlobalBestPosition() << std::endl;
             std::cout << "Waypoint: " << Waypoint << std::endl;
             std::cout << "Length (px): " << Planner->GetPathLength() << std::endl;
@@ -92,6 +93,8 @@ int main ()
 
         Planner->Clear();
     }
+
+    delete CostMap;
 
     return 0;
 }

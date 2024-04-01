@@ -9,10 +9,10 @@ add_executable(GlobalPlanner
         include/ABCPlanner.h
         include/BasePlanner.h
         include/CostMapLoader.h
-        include/GWOPlanner.h
+        include/IGWOPlanner.h
+        include/IPSOPlanner.h
         include/Point.h
         include/Print.h
-        include/PSOPlanner.h
         include/spline.h
         include/Utility.h
         source/main.cpp
