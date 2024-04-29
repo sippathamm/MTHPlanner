@@ -1,7 +1,7 @@
 # Path Planning with Metaheuristic Algorithms
 
 <p align="center">
-  <img width="295" height="295" src="https://github.com/sippathamm/MTHPlanner/blob/develop/Turtlebot3_World.png">
+  <img width="295" height="295" src="https://github.com/sippathamm/MTHPlanner/blob/master/Turtlebot3_World.png">
 </p>
         
 This repository provides implementations of path planning using metaheuristic algorithms, 
@@ -26,6 +26,12 @@ such as colors, markers, and labels.
 ### Adjusting Lethal Area Cost
 
 You can adjust the minimum cost for defining lethal areas by modifying the macro `LETHAL_COST` in the `Utility.h` file.
+
+## Animation
+
+<p align="center">
+  <img src="https://github.com/sippathamm/MTHPlanner/blob/master/Animation.gif">
+</p>
 
 ## Author
 
