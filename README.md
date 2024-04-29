@@ -1,7 +1,9 @@
 # Path Planning with Metaheuristic Algorithms
 
-![](Path%20Planning.png "Path Planning"){ width="295" height="295" style="display: block; margin: 0 auto" }
-
+<p align="center">
+  <img width="295" height="295" src="https://github.com/sippathamm/MTHPlanner/blob/develop/Turtlebot3_World.png">
+</p>
+        
 This repository provides implementations of path planning using metaheuristic algorithms, 
 including IPSO, IGWO, and ABC. It includes an example file `Planner.cpp` in the `source` directory.
 
