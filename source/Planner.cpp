@@ -34,8 +34,8 @@ int main ()
     bool Log = true; // Flag indicating whether to log information during optimization
 
     // PSO parameters
-    double SocialCoefficient = 2.0f; // Social coefficient
-    double CognitiveCoefficient = 1.3f; // Cognitive coefficient
+    double SocialCoefficient = 2.0; // Social coefficient
+    double CognitiveCoefficient = 1.3; // Cognitive coefficient
     int VelocityConfinement = MTH::IPSO::VELOCITY_CONFINEMENT::HYPERBOLIC; // Velocity confinement type
 
     // GWO parameters
