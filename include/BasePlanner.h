@@ -273,8 +273,7 @@ namespace MTH
          *
          * @param Length Reference to store the length of the linear path.
          * @param Waypoint Reference to store the waypoints of the linear path.
-         * @param X Vector containing X coordinates of breakpoints.
-         * @param Y Vector containing Y coordinates of breakpoints.
+         * @param Position The position of particle.
          */
         void LinearPath (double &Length,
                          std::vector<APoint> &Waypoint,
@@ -313,8 +312,7 @@ namespace MTH
          *
          * @param Length Reference to store the length of the cubic spline path.
          * @param Waypoint Reference to store the waypoints of the cubic spline path.
-         * @param X Vector containing X coordinates of breakpoints.
-         * @param Y Vector containing Y coordinates of breakpoints.
+         * @param Position The position of particle.
          */
         void CubicSplinePath (double &Length,
                               std::vector<APoint> &Waypoint,
