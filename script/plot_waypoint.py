@@ -9,7 +9,7 @@ MAP_DIRECTORY = 'map'
 MAP_NAME = 'turtlebot3_world'
 
 # Name of the plotted image
-OUTPUT_NAME = 'Turtlebot3 World'
+OUTPUT_NAME = 'Turtlebot3_World'
 
 MAP_PATH = os.path.join('..', MAP_DIRECTORY, MAP_NAME + '.png')
 OUTPUT_PATH = os.path.join('..', OUTPUT_NAME + '.png')
