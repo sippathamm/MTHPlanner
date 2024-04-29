@@ -15,5 +15,5 @@ add_executable(GlobalPlanner
         include/Print.h
         include/spline.h
         include/Utility.h
-        source/main.cpp
+        source/Planner.cpp
 )

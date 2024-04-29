@@ -11,6 +11,9 @@ namespace MTH
 {
     namespace IGWO
     {
+        /**
+         * @brief A struct representing a wolf in the IGWO algorithm.
+         */
         typedef struct AWolf
         {
             AWolf () : Cost(2e10) {}
@@ -19,6 +22,9 @@ namespace MTH
             double Cost;
         } AWolf;
 
+        /**
+         * @brief A struct representing leader wolves in the IGWO algorithm.
+         */
         typedef struct ALeaderWolf
         {
             AWolf Alpha;    // 1st Best
@@ -26,46 +32,78 @@ namespace MTH
             AWolf Delta;    // 3rd Best
         } ALeaderWolf;
 
+        /**
+         * @brief A class representing the Improved Grey Wolf Optimizer (IGWO) algorithm.
+         */
         class AIGWOPlanner : public ABasePlanner
         {
         public:
+            /**
+             * @brief Constructor.
+             *
+             * @param LowerBound Lower bound of the search space.
+             * @param UpperBound Upper bound of the search space.
+             * @param MaximumIteration Maximum number of iterations.
+             * @param NPopulation Population size.
+             * @param NBreakpoint Number of breakpoints.
+             * @param NWaypoint Number of waypoints.
+             * @param MaximumWeight The maximum weight.
+             * @param MinimumWeight The minimum weight.
+             * @param MaximumInertialWeight Maximum inertial weight for velocity update.
+             * @param MinimumInertialWeight Minimum inertial weight for velocity update.
+             * @param VelocityFactor Factor for limiting velocity update.
+             * @param InitialPositionType Type of initial position distribution.
+             * @param TrajectoryType Type of trajectory.
+             * @param Log Flag indicating whether to log information during optimization.
+             */
             AIGWOPlanner (const APoint &LowerBound, const APoint &UpperBound,
-                         int MaximumIteration, int NPopulation, int NBreakpoint, int NWaypoint,
-                         double Theta, double K,
-                         double Maximum_a = 2.2f, double Minimum_a = 0.02f,
-                         double MaximumWeight = 0.9f, double MinimumWeight = 0.4f,
-                         double VelocityFactor = 0.5f,
-                         INITIAL_POSITION_TYPE InitialPositionType = INITIAL_POSITION::DISTRIBUTED,
-                         TRAJECTORY_TYPE TrajectoryType = TRAJECTORY::CUBIC_SPLINE,
-                         bool Log = true) :
-                         ABasePlanner(LowerBound, UpperBound,
-                                      MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
-                                      TrajectoryType),
-                         Theta_(Theta),
-                         K_(K),
-                         Maximum_a_(Maximum_a),
-                         Minimum_a_(Minimum_a),
-                         MaximumWeight_(MaximumWeight),
-                         MinimumWeight_(MinimumWeight),
-                         VelocityFactor_(VelocityFactor),
-                         InitialPositionType_(InitialPositionType),
-                         Log_(Log)
+                          int MaximumIteration, int NPopulation, int NBreakpoint, int NWaypoint,
+                          double MaximumWeight = 2.2, double MinimumWeight = 0.02,
+                          double MaximumInertialWeight = 0.9, double MinimumInertialWeight = 0.4,
+                          double VelocityFactor = 0.5,
+                          INITIAL_POSITION_TYPE InitialPositionType = INITIAL_POSITION::DISTRIBUTED,
+                          TRAJECTORY_TYPE TrajectoryType = TRAJECTORY::CUBIC_SPLINE,
+                          bool Log = true) :
+                          ABasePlanner(LowerBound, UpperBound,
+                                       MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
+                                       TrajectoryType),
+                          MaximumWeight_(MaximumWeight),
+                          MinimumWeight_(MinimumWeight),
+                          MaximumInertialWeight_(MaximumInertialWeight),
+                          MinimumInertialWeight_(MinimumInertialWeight),
+                          VelocityFactor_(VelocityFactor),
+                          InitialPositionType_(InitialPositionType),
+                          Log_(Log)
             {
                 std::cout << "[INFO] IGWO Planner instance has been created." << std::endl;
             }
 
+            /**
+             * @brief Destructor.
+             */
             ~AIGWOPlanner () override = default;
 
+            /**
+             * @brief Create a plan.
+             *
+             * @param CostMap Pointer to the cost map.
+             * @param Start Start point of the path.
+             * @param Goal Goal point of the path.
+             * @param Waypoint Vector to store the generated waypoints.
+             *
+             * @return SUCCESS if the plan is successfully created, FAILED otherwise.
+             */
             bool CreatePlan (const unsigned char *CostMap,
                              const APoint &Start,
                              const APoint &Goal,
                              std::vector<APoint> &Waypoint) override
             {
+                // Set the inputs for the optimization process, including the cost map, start point, and goal point.
                 this->CostMap_ = CostMap;
                 this->Start_ = &Start;
                 this->Goal_ = &Goal;
 
-                // Initialize
+                // Initialize population
                 this->Population_ = std::vector<AWolf> (NPopulation_);
 
                 this->Range_ = this->UpperBound_ - this->LowerBound_;
@@ -74,12 +112,14 @@ namespace MTH
                 this->MaximumVelocity_ = (this->UpperBound_ - this->LowerBound_) * this->VelocityFactor_;
                 this->MinimumVelocity_ = MaximumVelocity_ * -1.0f;
 
+                // Initialize wolves with random positions
                 for (int PopulationIndex = 0; PopulationIndex < this->NPopulation_; ++PopulationIndex)
                 {
                     auto *CurrentPopulation = &this->Population_[PopulationIndex];
 
                     std::vector<APoint> Position(this->NBreakpoint_);
 
+                    // Generate random positions within bounds for each breakpoint
                     for (int BreakpointIndex = 0; BreakpointIndex < this->NBreakpoint_; ++BreakpointIndex)
                     {
                         APoint RandomPosition;
@@ -108,26 +148,33 @@ namespace MTH
                     CurrentPopulation->Position = Position;
 
                     double Cost = ObjectiveFunction(CurrentPopulation->Position);
-
                     CurrentPopulation->Cost = Cost;
 
                     this->AverageCost_ += Cost;
                 }
 
+                // Compute average cost of the initial population.
                 this->AverageCost_ /= this->NPopulation_;
 
                 std::cout << "[INFO] IGWO Planner starts optimizing." << std::endl;
 
-                // Optimize
+                // Start timing
+                auto StartTime = std::chrono::high_resolution_clock::now();
+
+                // Run optimization process for a maximum number of iterations
                 for (int Iteration = 1; Iteration <= this->MaximumIteration_; ++Iteration)
                 {
-                    // Update Alpha, Beta, and Delta wolf
+                    // Update the global best position
                     UpdateGlobalBestPosition();
 
-                    // Calculate a_Alpha, a_Beta, a_Delta
-                    Calculate_a(Iteration);
+                    // Calculate weight
+                    CalculateWeight(Iteration);
 
+                    // Optimize wolves positions
                     Optimize();
+
+                    this->GlobalBestPosition_ = this->GlobalBest_.Alpha.Position;
+                    this->GlobalBestCost_ = this->GlobalBest_.Alpha.Cost;
 
                     this->Convergence_.push_back(this->GlobalBestCost_);
 
@@ -135,21 +182,26 @@ namespace MTH
                     {
                         std::cout << "[INFO] Iteration: " << Iteration << " >>> \n\t"
                                   << "Best Cost: " << this->GlobalBestCost_ << " \n\t"
-                                  << "Best Position: " << this->GlobalBestPosition_.Alpha.Position <<
+                                  << "Best Position: " << this->GlobalBestPosition_ <<
                                   std::endl;
                     }
 
+                    // Update average cost for the next iteration.
                     this->NextAverageCost_ /= this->NPopulation_;
                     this->AverageCost_ = this->NextAverageCost_;
                     this->NextAverageCost_ = 0.0f;
-
-                    ABasePlanner::GlobalBestPosition_ = this->GlobalBestPosition_.Alpha.Position;
-                    ABasePlanner::GlobalBestCost_ = this->GlobalBestPosition_.Alpha.Cost;
                 }
 
-                std::cout << "[INFO] Completed." << std::endl;
+                // Stop timing
+                auto StopTime = std::chrono::high_resolution_clock::now();
 
-                auto Breakpoint = ConstructBreakpoint(this->GlobalBestPosition_.Alpha.Position);
+                // Calculate duration
+                auto Duration = std::chrono::duration_cast<std::chrono::milliseconds>(StopTime - StartTime);
+
+                std::cout << "[INFO] Completed, " << "taken " << Duration.count() << " milliseconds." << std::endl;
+
+                // Construct the path based on the global best position.
+                auto Breakpoint = ConstructBreakpoint(this->GlobalBestPosition_);
                 auto X = Breakpoint.first;
                 auto Y = Breakpoint.second;
 
@@ -169,9 +221,10 @@ namespace MTH
                         CubicSplinePath(Length, Waypoint, X, Y);
                 }
 
+                // Check if the path is empty.
                 if (Waypoint.empty())
                 {
-                    std::cerr << "[INFO] Path not found!" << std::endl;
+                    std::cerr << "[ERROR] Path not found!" << std::endl;
 
                     return STATE::FAILED;
                 }
@@ -181,191 +234,294 @@ namespace MTH
                 return STATE::SUCCESS;
             }
 
+            /**
+             * @brief Clear the planner's state.
+             */
             void Clear () override
             {
-                this->GlobalBestPosition_.Alpha.Position.clear();
-                this->GlobalBestPosition_.Alpha.Cost = 2e10;
+                // Clear the global best position.
+                this->GlobalBest_.Alpha.Position.clear();
+                this->GlobalBest_.Beta.Position.clear();
+                this->GlobalBest_.Delta.Position.clear();
 
-                this->GlobalBestPosition_.Beta.Position.clear();
-                this->GlobalBestPosition_.Beta.Cost = 2e10;
-
-                this->GlobalBestPosition_.Delta.Position.clear();
-                this->GlobalBestPosition_.Delta.Cost = 2e10;
-
+                // Set the global best cost to a large value.
+                this->GlobalBest_.Alpha.Cost = 2e10;
+                this->GlobalBest_.Beta.Cost = 2e10;
+                this->GlobalBest_.Delta.Cost = 2e10;
                 this->GlobalBestCost_ = 2e10;
 
+                // Clear the convergence history.
                 this->Convergence_.clear();
             }
 
         protected:
-            double Theta_, K_;
-            double Weight_{}, H_{};
-            double a_Alpha_{}, a_Beta_{}, a_Delta_{};
-            double AlphaGrowthFactor_ = 2.0f, DeltaGrowthFactor_ = 3.0f;
-            double Maximum_a_, Minimum_a_;
-            double MaximumWeight_, MinimumWeight_;
-            double VelocityFactor_;
+            double AlphaWeight_{}; /**< Weight for alpha wolf */
+            double BetaWeight_{}; /**< Weight for beta wolf */
+            double DeltaWeight_{}; /**< Weight for delta wolf */
+            double AlphaGrowthFactor_ = 2.0; /**< Growth factor for alpha wolf weight. */
+            double DeltaGrowthFactor_ = 3.0; /**< Growth factor for delta wolf weight. */
+            double MaximumWeight_; /**< Maximum weight */
+            double MinimumWeight_; /**< Minimum weight */
+            double Theta_ = 2.2; /**< Scaling factor used to regulate the form of the function curve for the inertial weight calculation. */
+            double K_ = 1.5; /**< Scaling factor used to regulate the form of the function curve for the inertial weight calculation. */
+            double InertialWeight_{}; /**< Current inertial weight. */
+            double MaximumInertialWeight_; /**< Maximum inertial weight for velocity update. */
+            double MinimumInertialWeight_; /**< Minimum inertial weight for velocity update. */
+            double VelocityFactor_; /**< Factor for limiting velocity update. */
 
-            std::vector<AWolf> Population_;
-            APoint MaximumVelocity_, MinimumVelocity_;
+            std::vector<AWolf> Population_; /**< Vector containing wolves. */
+            APoint MaximumVelocity_; /**< Vector containing maximum velocity for each breakpoint. */
+            APoint MinimumVelocity_; /**< Vector containing minimum velocity for each breakpoint. */
 
-            ALeaderWolf GlobalBestPosition_;
+            ALeaderWolf GlobalBest_; /**< Global best wolves found by the algorithm. */
+            double AverageCost_ = 0.0; /**< Average cost of the population. */
+            double NextAverageCost_ = 0.0; /**< Next average cost of the population. */
 
-            double AverageCost_ = 0.0f;
-            double NextAverageCost_ = 0.0f;
-
-            INITIAL_POSITION_TYPE InitialPositionType_;
-            bool Log_;
+            INITIAL_POSITION_TYPE InitialPositionType_; /**< Type of initial position distribution. */
+            bool Log_; /**< Flag indicating whether to log information during optimization. */
 
         private:
+            /**
+             * @brief Update the global best position.
+             *
+             * This function iterates through the population and updates the global best position
+             * based on the cost of each individual in the population.
+             */
             void UpdateGlobalBestPosition ()
             {
+                // Iterate over each wolf in the population
                 for (int PopulationIndex = 0; PopulationIndex < this->NPopulation_; ++PopulationIndex)
                 {
                     auto *CurrentPopulation = &this->Population_[PopulationIndex];
 
-                    if (CurrentPopulation->Cost < GlobalBestPosition_.Alpha.Cost)
+                    // Update alpha wolf's position and cost if the current wolf has a lower cost than alpha's cost
+                    if (CurrentPopulation->Cost < GlobalBest_.Alpha.Cost)
                     {
-                        GlobalBestPosition_.Alpha.Position = CurrentPopulation->Position;
-                        GlobalBestPosition_.Alpha.Cost = CurrentPopulation->Cost;
+                        GlobalBest_.Alpha.Position = CurrentPopulation->Position;
+                        GlobalBest_.Alpha.Cost = CurrentPopulation->Cost;
                     }
-                    if (CurrentPopulation->Cost > GlobalBestPosition_.Alpha.Cost &&
-                        CurrentPopulation->Cost < GlobalBestPosition_.Beta.Cost)
+
+                    // Update beta wolf's position and cost if the current wolf has a lower cost than beta's cost
+                    if (CurrentPopulation->Cost > GlobalBest_.Alpha.Cost &&
+                        CurrentPopulation->Cost < GlobalBest_.Beta.Cost)
                     {
-                        GlobalBestPosition_.Beta.Position = CurrentPopulation->Position;
-                        GlobalBestPosition_.Beta.Cost = CurrentPopulation->Cost;
+                        GlobalBest_.Beta.Position = CurrentPopulation->Position;
+                        GlobalBest_.Beta.Cost = CurrentPopulation->Cost;
                     }
-                    if (CurrentPopulation->Cost > GlobalBestPosition_.Alpha.Cost &&
-                        CurrentPopulation->Cost > GlobalBestPosition_.Beta.Cost &&
-                        CurrentPopulation->Cost < GlobalBestPosition_.Delta.Cost)
+
+                    // Update delta wolf's position and cost if the current wolf has a lower cost than delta's cost
+                    if (CurrentPopulation->Cost > GlobalBest_.Alpha.Cost &&
+                        CurrentPopulation->Cost > GlobalBest_.Beta.Cost &&
+                        CurrentPopulation->Cost < GlobalBest_.Delta.Cost)
                     {
-                        GlobalBestPosition_.Delta.Position = CurrentPopulation->Position;
-                        GlobalBestPosition_.Delta.Cost = CurrentPopulation->Cost;
+                        GlobalBest_.Delta.Position = CurrentPopulation->Position;
+                        GlobalBest_.Delta.Cost = CurrentPopulation->Cost;
                     }
                 }
             }
 
-            void Calculate_a (int Iteration)
+            /**
+             * @brief Calculate the weights based on the current iteration.
+             *
+             * This function calculates the weights (alpha, beta, and delta)
+             * based on the current iteration.
+             *
+             * @param Iteration The current iteration.
+             *
+             * @note The weight calculation is extracted from the paper "Improved GWO algorithm
+             * for optimal design of truss structures" by A. Kaveh and P. Zakian.
+             * The weight equations are derived from Equation (8), (9), and (10) of their paper.
+             * Link to the paper: https://link.springer.com/article/10.1007/s00366-017-0567-1
+             */
+            void CalculateWeight (int Iteration)
             {
-                this->a_Alpha_ = this->Maximum_a_ *
-                                 exp(pow(static_cast<double>(Iteration) / this->MaximumIteration_, this->AlphaGrowthFactor_) *
-                                     log(this->Minimum_a_ / this->Maximum_a_));
-                this->a_Delta_ = this->Maximum_a_ *
-                                 exp(pow(static_cast<double>(Iteration) / this->MaximumIteration_, this->DeltaGrowthFactor_) *
-                                     log(this->Minimum_a_ / this->Maximum_a_));
-                this->a_Beta_ = (this->a_Alpha_ + this->a_Delta_) * 0.5f;
+                // Calculate alpha weight
+                this->AlphaWeight_ = this->MaximumWeight_ *
+                                     exp(pow(static_cast<double>(Iteration) / this->MaximumIteration_, this->AlphaGrowthFactor_) *
+                                         log(this->MinimumWeight_ / this->MaximumWeight_));
+
+                // Calculate delta weight
+                this->DeltaWeight_ = this->MaximumWeight_ *
+                                     exp(pow(static_cast<double>(Iteration) / this->MaximumIteration_, this->DeltaGrowthFactor_) *
+                                         log(this->MinimumWeight_ / this->MaximumWeight_));
+
+                // Calculate beta weight as the average of alpha and delta weights
+                this->BetaWeight_ = (this->AlphaWeight_ + this->DeltaWeight_) * 0.5;
             }
 
-            void CalculateWeight (AWolf *CurrentPopulation)
+            /**
+             * @brief Calculates the inertial weight for the current population using the multi-modal adaptive function (MAF) with tangent function.
+             *
+             * From the paper "An Improved grey wolf optimizer with weighting functions and its application to Unmanned Aerial Vehicles path planning"
+             * by Hongran Li, Tieli Lv, Yuchao Shui, Jian Zhang, Heng Zhang, Hui Zhao, and Saibao Ma.
+             * Link to the paper: https://www.sciencedirect.com/science/article/pii/S0045790623003178
+             *
+             * @param CurrentPopulation Pointer to the current population.
+             */
+            void CalculateInertialWeight (AWolf *CurrentPopulation)
             {
-                this->H_ = this->K_ * ((0.0f - CurrentPopulation->Cost) / this->AverageCost_);
-                //                      ^ Optimal cost
-                this->Weight_ = ((this->MaximumWeight_ + this->MinimumWeight_) * 0.5f) +
-                                (this->MaximumWeight_ - this->MinimumWeight_) * (this->H_ / (std::hypot(1.0f, this->H_))) * tan(this->Theta_);
+                // Equation (13) from the paper "An Improved grey wolf optimizer with weighting functions and its application to Unmanned Aerial Vehicles path planning"
+                double H = this->K_ * ((0.0 - CurrentPopulation->Cost) / this->AverageCost_);
+
+                // Equation (12) from the paper "An Improved grey wolf optimizer with weighting functions and its application to Unmanned Aerial Vehicles path planning"
+                this->InertialWeight_ = ((this->MaximumInertialWeight_ + this->MinimumInertialWeight_) * 0.5f) +
+                                        (this->MaximumInertialWeight_ - this->MinimumInertialWeight_) *
+                                        (H / (std::hypot(1.0f, H))) * tan(this->Theta_);
             }
 
+            /**
+             * @brief Optimize the positions of wolves in the population.
+             *
+             * This function optimizes the positions of wolves in the population.
+             * It calculates the GWO and DLH positions of each wolf, evaluates the cost of the calculated positions,
+             * updates the best position of each wolf based on the comparison of GWO and DLH costs.
+             *
+             * @note - The IGWO algorithm incorporates an additional movement strategy named
+             * dimension learning-based hunting (DLH) search strategy.
+             * In DLH, each individual wolf is learned by its neighbors to be another candidate
+             * for the new position of Xi (t). The information about IGWO algorithm and DLH is based on the paper "An improved grey wolf optimizer for solving engineering problems"
+             * by Mohammad H. Nadimi-Shahraki, Shokooh Taghian, and Seyedali Mirjalili.
+             * Link to the paper: https://www.sciencedirect.com/science/article/pii/S0957417420307107
+             * - The IGWO-WFs algorithm initially refers to the PSO algorithm and introduces a weight update function to transform the position and update rule.
+             * After the position and rule updates, the DLH search strategy is adopted. During each iteration, the weights are continuously updated based on the progress of the algorithm and search results,
+             * with the goal of improving the convergence velocity and search effectiveness of the algorithm.
+             * The information is extracted from the paper "An Improved grey wolf optimizer with weighting functions and its application to Unmanned Aerial Vehicles path planning"
+             * by Hongran Li, Tieli Lv, Yuchao Shui, Jian Zhang, Heng Zhang, Hui Zhao, and Saibao Ma.
+             * Link to the paper: https://www.sciencedirect.com/science/article/pii/S0045790623003178
+             */
             void Optimize ()
             {
+                // Iterate over each wolf in the population
                 for (int PopulationIndex = 0; PopulationIndex < this->NPopulation_; ++PopulationIndex)
                 {
                     auto *CurrentPopulation = &this->Population_[PopulationIndex];
 
-                    CalculateWeight(CurrentPopulation);
+                    CalculateInertialWeight(CurrentPopulation);
 
-                    double Radius = 0.0f;
-                    std::vector<APoint> IGWOPosition(this->NBreakpoint_);
+                    double Radius = 0.0;
+                    std::vector<APoint> GWOPosition(this->NBreakpoint_);
 
+                    // Iterate over each breakpoint of the wolf
                     for (int BreakpointIndex = 0; BreakpointIndex < this->NBreakpoint_; ++BreakpointIndex)
                     {
-                        double A1 = this->a_Alpha_ * (2.0f * GenerateRandom(0.0f, 1.0f) - 1);
-                        double A2 = this->a_Beta_ * (2.0f * GenerateRandom(0.0f, 1.0f) - 1);
-                        double A3 = this->a_Delta_ * (2.0f * GenerateRandom(0.0f, 1.0f) - 1);
+                        // Generate random values for alpha, beta, and delta
+                        double A1 = this->AlphaWeight_ * (2.0 * GenerateRandom(0.0, 1.0) - 1.0);
+                        double A2 = this->BetaWeight_ * (2.0 * GenerateRandom(0.0, 1.0) - 1.0);
+                        double A3 = this->DeltaWeight_ * (2.0 * GenerateRandom(0.0, 1.0) - 1.0);
 
-                        double C1 = 2.0f * GenerateRandom(0.0f, 1.0f);
-                        double C2 = 2.0f * GenerateRandom(0.0f, 1.0f);
-                        double C3 = 2.0f * GenerateRandom(0.0f, 1.0f);
+                        // Generate random values for C1, C2, and C3
+                        double C1 = 2.0 * GenerateRandom(0.0, 1.0);
+                        double C2 = 2.0 * GenerateRandom(0.0, 1.0);
+                        double C3 = 2.0 * GenerateRandom(0.0, 1.0);
 
-                        APoint X1 = GlobalBestPosition_.Alpha.Position[BreakpointIndex] -
-                                    Absolute((GlobalBestPosition_.Alpha.Position[BreakpointIndex] - CurrentPopulation->Position[BreakpointIndex]) * C1) * A1;
-                        APoint X2 = GlobalBestPosition_.Beta.Position[BreakpointIndex] -
-                                    Absolute((GlobalBestPosition_.Beta.Position[BreakpointIndex] - CurrentPopulation->Position[BreakpointIndex]) * C2) * A2;
-                        APoint X3 = GlobalBestPosition_.Delta.Position[BreakpointIndex] -
-                                    Absolute((GlobalBestPosition_.Delta.Position[BreakpointIndex] - CurrentPopulation->Position[BreakpointIndex]) * C3) * A3;
+                        // Calculate new position components
+                        APoint X1 = GlobalBest_.Alpha.Position[BreakpointIndex] -
+                                    Absolute((GlobalBest_.Alpha.Position[BreakpointIndex] - CurrentPopulation->Position[BreakpointIndex]) * C1) * A1;
+                        APoint X2 = GlobalBest_.Beta.Position[BreakpointIndex] -
+                                    Absolute((GlobalBest_.Beta.Position[BreakpointIndex] - CurrentPopulation->Position[BreakpointIndex]) * C2) * A2;
+                        APoint X3 = GlobalBest_.Delta.Position[BreakpointIndex] -
+                                    Absolute((GlobalBest_.Delta.Position[BreakpointIndex] - CurrentPopulation->Position[BreakpointIndex]) * C3) * A3;
 
-                        APoint X = (X1 + X2 + X3) / 3.0f;
+                        // Calculate new position
+                        APoint X = (X1 + X2 + X3) / 3.0;
 
-                        double R1 = GenerateRandom(0.0f, 1.0f);
-                        double R2 = GenerateRandom(0.0f, 1.0f);
-                        double R3 = GenerateRandom(0.0f, 1.0f);
+                        // Generate random values for R1, R2, and R3
+                        double R1 = GenerateRandom(0.0, 1.0);
+                        double R2 = GenerateRandom(0.0, 1.0);
+                        double R3 = GenerateRandom(0.0, 1.0);
 
-                        APoint NewVelocity = (((X1 - X) * C1 * R1) + ((X2 - X) * C2 * R2) + ((X3 - X) * C3 * R3)) * this->Weight_;
+                        // Calculate new velocity
+                        // Equation (9) from the paper "An Improved grey wolf optimizer with weighting functions and its application to Unmanned Aerial Vehicles path planning"
+                        APoint NewVelocity = (((X1 - X) * C1 * R1) + ((X2 - X) * C2 * R2) + ((X3 - X) * C3 * R3)) * this->InertialWeight_;
 
+                        // Clamp the new velocity to stay within specified bounds
                         NewVelocity.X = CLAMP(NewVelocity.X, this->MinimumVelocity_.X, this->MaximumVelocity_.X);
                         NewVelocity.Y = CLAMP(NewVelocity.Y, this->MinimumVelocity_.Y, this->MaximumVelocity_.Y);
 
+                        // Equation (8) from the paper "An Improved grey wolf optimizer with weighting functions and its application to Unmanned Aerial Vehicles path planning"
                         APoint TemporaryNewPosition = X + NewVelocity;
 
+                        // Check if the temporary new position is out of bounds
                         if (IS_OUT_OF_BOUND(TemporaryNewPosition.X, this->LowerBound_.X, this->UpperBound_.X) ||
                             IS_OUT_OF_BOUND(TemporaryNewPosition.Y, this->LowerBound_.Y, this->UpperBound_.Y))
                         {
-                            APoint VelocityConfinement = NewVelocity * -GenerateRandom(0.0f, 1.0f);
+                            // Apply velocity confinement
+                            APoint VelocityConfinement = NewVelocity * -GenerateRandom(0.0, 1.0);
 
                             NewVelocity = VelocityConfinement;
                         }
 
                         APoint NewPosition = X + NewVelocity;
 
+                        // Clamp the new position to stay within specified bounds
                         NewPosition.X = CLAMP(NewPosition.X, this->LowerBound_.X, this->UpperBound_.X);
                         NewPosition.Y = CLAMP(NewPosition.Y, this->LowerBound_.Y, this->UpperBound_.Y);
 
-                        // R = (X_i - X_new)^2
+                        // Equation (10) from the paper "An improved grey wolf optimizer for solving engineering problems"
                         Radius += std::hypot(CurrentPopulation->Position[BreakpointIndex].X - NewPosition.X,
                                              CurrentPopulation->Position[BreakpointIndex].Y - NewPosition.Y);
 
-                        IGWOPosition[BreakpointIndex] = NewPosition;
+                        // Store GWO position
+                        GWOPosition[BreakpointIndex] = NewPosition;
                     }
 
-                    // Stored index which neighbor distance <= radius
+                    // Get the index of neighborhood and calculate the DLH position
                     std::vector<int> Index = GetNeighborHoodIndex(CurrentPopulation, Radius);
                     std::vector<APoint> DLHPosition = CalculateDLHPosition(CurrentPopulation, Index);
 
-                    double IGWOCost = ObjectiveFunction(IGWOPosition);
+                    // Calculate costs for GWO and DLH positions
+                    double GWOCost = ObjectiveFunction(GWOPosition);
                     double DLHCost = ObjectiveFunction(DLHPosition);
 
-                    if (IGWOCost < DLHCost)
+                    // Update the wolf's position and cost based on the comparison of GWO and DLH costs
+                    // Equation (13) from the paper "An improved grey wolf optimizer for solving engineering problems"
+                    if (GWOCost < DLHCost)
                     {
-                        CurrentPopulation->Position = IGWOPosition;
-                        CurrentPopulation->Cost = IGWOCost;
+                        CurrentPopulation->Position = GWOPosition;
+                        CurrentPopulation->Cost = GWOCost;
 
-                        this->NextAverageCost_ += IGWOCost;
+                        this->AverageCost_ += GWOCost;
                     }
                     else
                     {
                         CurrentPopulation->Position = DLHPosition;
                         CurrentPopulation->Cost = DLHCost;
 
-                        this->NextAverageCost_ += DLHCost;
+                        this->AverageCost_ += DLHCost;
                     }
                 }
             }
 
+            /**
+             * @brief Get the indices of wolves within the neighborhood of a given wolf.
+             *
+             * This function calculates the indices of wolves within the neighborhood of a given wolf
+             * based on the provided radius.
+             *
+             * @param CurrentPopulation Pointer to the current population.
+             * @param Radius The radius used to define the neighborhood.
+             *
+             * @return A vector containing the indices of wolves within the neighborhood.
+             */
             std::vector<int> GetNeighborHoodIndex (AWolf *CurrentPopulation, double &Radius)
             {
                 std::vector<int> Index;
 
+                // Iterate over each wolf in the population
                 for (int PopulationIndex = 0; PopulationIndex < this->NPopulation_; ++PopulationIndex)
                 {
                     auto *AnotherPopulation = &this->Population_[PopulationIndex];
 
                     double Distance = 0.0;
 
+                    // Calculate the distance between the current wolf and neighbor wolf in the population
                     for (int BreakpointIndex = 0; BreakpointIndex < this->NBreakpoint_; ++BreakpointIndex)
                     {
-                        // D = (X_i - X_j)^2
                         Distance += std::hypot(CurrentPopulation->Position[BreakpointIndex].X - AnotherPopulation->Position[BreakpointIndex].X,
                                                CurrentPopulation->Position[BreakpointIndex].Y - AnotherPopulation->Position[BreakpointIndex].Y);
                     }
 
+                    // Equation (11) from the paper "An improved grey wolf optimizer for solving engineering problems"
                     if (Distance <= Radius)
                     {
                         Index.push_back(PopulationIndex);
@@ -375,22 +531,39 @@ namespace MTH
                 return Index;
             }
 
+            /**
+             * @brief Calculate the DLH position for a wolf.
+             *
+             * This function calculates the DLH position for a wolf based on its neighbors' positions.
+             *
+             * @param CurrentPopulation Pointer to the current population.
+             * @param Index Vector containing the indices of wolves within the neighborhood.
+             *
+             * @return A vector representing the DLH position for the current wolf.
+             */
             std::vector<APoint> CalculateDLHPosition (AWolf *CurrentPopulation, const std::vector<int> &Index)
             {
                 std::vector<APoint> DLHPosition(this->NBreakpoint_);
 
+                // Iterate over each wolf in the population
                 for (int BreakpointIndex = 0; BreakpointIndex < this->NBreakpoint_; ++BreakpointIndex)
                 {
-                    int NeighborIndex = GenerateRandomIndex((int)Index.size() - 1);
-                    int PopulationIndex = GenerateRandomIndex(this->NPopulation_ - 1);
+                    // Select a random index from the neighborhood
+                    int NeighborIndex = GenerateRandom((int)Index.size() - 1);
 
+                    // Select a random index from the population
+                    int PopulationIndex = GenerateRandom(this->NPopulation_ - 1);
+
+                    // Equation (12) from the paper "An improved grey wolf optimizer for solving engineering problems"
                     APoint DLH = CurrentPopulation->Position[BreakpointIndex] +
                                  (this->Population_[Index[NeighborIndex]].Position[BreakpointIndex] -
                                  this->Population_[PopulationIndex].Position[BreakpointIndex]) * GenerateRandom(0.0f, 1.0f);
 
+                    // Clamp the DLH position to stay within specified bounds
                     DLH.X = CLAMP(DLH.X, this->LowerBound_.X, this->UpperBound_.X);
                     DLH.Y = CLAMP(DLH.Y, this->LowerBound_.Y, this->UpperBound_.Y);
 
+                    // Store DLH position
                     DLHPosition[BreakpointIndex] = DLH;
                 }
 
