@@ -200,25 +200,20 @@ namespace MTH
 
                 std::cout << "[INFO] Completed, " << "taken " << Duration.count() << " milliseconds." << std::endl;
 
-                // Construct the path based on the global best position.
-                auto Breakpoint = ConstructBreakpoint(this->GlobalBestPosition_);
-                auto X = Breakpoint.first;
-                auto Y = Breakpoint.second;
-
                 double Length = 0.0f;
 
                 switch (this->TrajectoryType_)
                 {
                     case TRAJECTORY::LINEAR:
-                        LinearPath(Length, Waypoint, X, Y);
+                        LinearPath(Length, Waypoint, this->GlobalBestPosition_);
                         break;
 
                     case TRAJECTORY::CUBIC_SPLINE:
-                        CubicSplinePath(Length, Waypoint, X, Y);
+                        CubicSplinePath(Length, Waypoint, this->GlobalBestPosition_);
                         break;
 
                     default:
-                        CubicSplinePath(Length, Waypoint, X, Y);
+                        CubicSplinePath(Length, Waypoint, this->GlobalBestPosition_);
                 }
 
                 // Check if the path is empty.

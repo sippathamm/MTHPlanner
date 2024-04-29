@@ -213,11 +213,6 @@ namespace MTH
          */
         double ObjectiveFunction (const std::vector<APoint> &Position)
         {
-            // Construct the breakpoint from the particle's position.
-            auto Breakpoint = ConstructBreakpoint(Position);
-            auto X = Breakpoint.first;
-            auto Y = Breakpoint.second;
-
             double Length = 0.0;
             std::vector<APoint> Waypoint;
 
@@ -225,15 +220,15 @@ namespace MTH
             switch (this->TrajectoryType_)
             {
                 case TRAJECTORY::LINEAR:
-                    LinearPath(Length, Waypoint, X, Y);
+                    LinearPath(Length, Waypoint, Position);
                     break;
 
                 case TRAJECTORY::CUBIC_SPLINE:
-                    CubicSplinePath(Length, Waypoint, X, Y);
+                    CubicSplinePath(Length, Waypoint, Position);
                     break;
 
                 default:
-                    CubicSplinePath(Length, Waypoint, X, Y);
+                    CubicSplinePath(Length, Waypoint, Position);
             }
 
             // Calculate the penalty and apply scaling factors to compute the cost.
@@ -250,7 +245,7 @@ namespace MTH
          *
          * @return A pair of vectors containing X and Y coordinates of the breakpoints.
          */
-        std::pair<std::vector<double>, std::vector<double>> ConstructBreakpoint (const std::vector<APoint> &Position)
+        std::pair<std::vector<double>, std::vector<double>> ConstructBreakpoint (const std::vector<APoint> &Position) const
         {
             std::vector<double> X(this->NBreakpoint_ + 2);
             std::vector<double> Y(this->NBreakpoint_ + 2);
@@ -283,9 +278,13 @@ namespace MTH
          */
         void LinearPath (double &Length,
                          std::vector<APoint> &Waypoint,
-                         const std::vector<double> &X,
-                         const std::vector<double> &Y) const
+                         const std::vector<APoint> &Position) const
         {
+            // Construct the breakpoint from the particle's position.
+            auto Breakpoint = ConstructBreakpoint(Position);
+            auto X = Breakpoint.first;
+            auto Y = Breakpoint.second;
+
             // Determine the number of interpolation points between each pair of breakpoints.
             int NInterpolationPoint = (this->NWaypoint_ - 1) / (this->NBreakpoint_ + 1);
 
@@ -319,9 +318,13 @@ namespace MTH
          */
         void CubicSplinePath (double &Length,
                               std::vector<APoint> &Waypoint,
-                              const std::vector<double> &X,
-                              const std::vector<double> &Y) const
+                              const std::vector<APoint> &Position) const
         {
+            // Construct the breakpoint from the particle's position.
+            auto Breakpoint = ConstructBreakpoint(Position);
+            auto X = Breakpoint.first;
+            auto Y = Breakpoint.second;
+
             // Generate linearly interpolated points for spline calculation.
             std::vector<double> Interpolation = LinearInterpolation(0.0, 1.0, this->NBreakpoint_ + 2);
 

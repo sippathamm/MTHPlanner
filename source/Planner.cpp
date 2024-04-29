@@ -19,10 +19,10 @@ int main ()
     // Load cost map and initialize start and goal points
     auto CostMap = CostMapLoader::CostMapLoader(CostMapName, Width, Height, Start, Goal);
 
-    MTH::APoint LowerBound(0.0, 0.0); // Lower bound of the search space
+    MTH::APoint LowerBound(0, 0); // Lower bound of the search space
     MTH::APoint UpperBound(Width, Height); // Upper bound of the search space
     int MaximumIteration = 100; // Maximum number of iterations for optimization
-    int NPopulation = 100; // Population size
+    int NPopulation = 50; // Population size
     int NBreakpoint = 3; // Number of breakpoints
     int NInterpolationPoint = 5; // Number of interpolation points
     int NWaypoint = 1 + (NBreakpoint + 1) * NInterpolationPoint; // Number of waypoints
@@ -31,7 +31,7 @@ int main ()
     double VelocityFactor = 0.5; // Velocity factor for limiting velocity update
     MTH::INITIAL_POSITION_TYPE InitialPositionType = MTH::INITIAL_POSITION::CIRCULAR; // Type of initial position distribution
     MTH::TRAJECTORY_TYPE TrajectoryType = MTH::TRAJECTORY::CUBIC_SPLINE; // Type of trajectory
-    bool Log = false; // Flag indicating whether to log information during optimization
+    bool Log = true; // Flag indicating whether to log information during optimization
 
     // PSO parameters
     double SocialCoefficient = 2.0f; // Social coefficient
@@ -41,6 +41,9 @@ int main ()
     // GWO parameters
     double MaximumWeight = 2.2; // Maximum weight
     double MinimumWeight = 0.02; // Minimum weight
+
+    // ABC parameters
+    // No parameters
 
     int NRun = 1; // Number of runs
 
