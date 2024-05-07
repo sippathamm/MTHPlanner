@@ -27,7 +27,8 @@ namespace CostMapLoader
                                         */
             SCENARIO_1 = 1,           /**< Scenario 1 map. */
             SCENARIO_2 = 2,           /**< Scenario 2 map. */
-            TURTLEBOT3_WORLD = 3,     /**< TurtleBot3 world map. */
+            SCENARIO_3 = 3,           /**< Scenario 3 map. */
+            TURTLEBOT3_WORLD = 4,     /**< TurtleBot3 world map. */
             // Add more maps here
         };
     }
@@ -149,6 +150,14 @@ namespace CostMapLoader
                 Goal = MTH::APoint(1589, 1214);
                 break;
 
+            case MAP::SCENARIO_3:
+                CostMapFile = "../map/scenario3.txt";
+                Width = 384;
+                Height = 384;
+                Start = MTH::APoint(41, 353);
+                Goal = MTH::APoint(346, 26);
+                break;
+
             case MAP::TURTLEBOT3_WORLD:
                 CostMapFile = "../map/turtlebot3_world.txt";
                 Width = 384;
@@ -160,11 +169,11 @@ namespace CostMapLoader
                 // Add more cases for additional predefined maps
 
             default:
-                CostMapFile = "../map/scenario2.txt";
-                Width = 2000;
-                Height = 3000;
-                Start = MTH::APoint(404, 2402);
-                Goal = MTH::APoint(1722, 752);
+                CostMapFile = "../map/turtlebot3_world.txt";
+                Width = 384;
+                Height = 384;
+                Start = MTH::APoint(211, 235);
+                Goal = MTH::APoint(171, 176);
         }
 
         auto *CostMap = new unsigned char[Width * Height];
