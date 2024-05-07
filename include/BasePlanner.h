@@ -389,7 +389,8 @@ namespace MTH
         {
             int BreakpointIndex = 0;
             int NInterpolationPoint = (this->NWaypoint_ - 1) / (this->NBreakpoint_ + 1);
-            double Penalty = 0.0;
+            int BreakpointCount = 0;
+            int WaypointCount = 0;
 
             // Iterate through waypoints
             for (int WaypointIndex = 0; WaypointIndex < this->NWaypoint_; ++WaypointIndex)
@@ -408,11 +409,11 @@ namespace MTH
                     // Penalize based on whether the waypoint is a breakpoint or not
                     if (WaypointIndex == BreakpointIndex)
                     {
-                        Penalty += 100.0;
+                        BreakpointCount++;
                     }
                     else
                     {
-                        Penalty += 20.0;
+                        WaypointCount++;
                     }
                 }
 
@@ -422,6 +423,8 @@ namespace MTH
                     BreakpointIndex += NInterpolationPoint;
                 }
             }
+
+            double Penalty = 1.0 * WaypointCount + 2.0 * BreakpointCount * WaypointCount;
 
             return Penalty;
         }
