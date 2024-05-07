@@ -33,12 +33,12 @@ int main ()
     MTH::TRAJECTORY_TYPE TrajectoryType = MTH::TRAJECTORY::CUBIC_SPLINE; // Type of trajectory
     bool Log = true; // Flag indicating whether to log information during optimization
 
-    // PSO parameters
+    // IPSO parameters
     double SocialCoefficient = 2.0; // Social coefficient
     double CognitiveCoefficient = 1.3; // Cognitive coefficient
     int VelocityConfinement = MTH::IPSO::VELOCITY_CONFINEMENT::HYPERBOLIC; // Velocity confinement type
 
-    // GWO parameters
+    // IGWO parameters
     double MaximumWeight = 2.2; // Maximum weight
     double MinimumWeight = 0.02; // Minimum weight
 
@@ -71,10 +71,10 @@ int main ()
         if (Planner->CreatePlan(CostMap, Start, Goal, Waypoint)) // Create plan using selected planner
         {
             // Output results
-            std::cout << "Convergence: " << Planner->GetConvergence() << std::endl;
-            std::cout << "Breakpoint: " << Planner->GetGlobalBestPosition() << std::endl;
-            std::cout << "Waypoint: " << Waypoint << std::endl;
-            std::cout << "Length (px): " << Planner->GetPathLength() << std::endl;
+            std::cout << "Convergences: " << Planner->GetConvergence() << std::endl;
+            std::cout << "Breakpoints: " << Planner->GetGlobalBestPosition() << std::endl;
+            std::cout << "Waypoints: " << Waypoint << std::endl;
+            std::cout << "Length (unit): " << Planner->GetPathLength() << std::endl;
         }
 
         Planner->Clear(); // Clear planner data for the next run
