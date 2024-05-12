@@ -453,12 +453,14 @@ namespace MTH
                         NewPosition.Y = CLAMP(NewPosition.Y, this->LowerBound_.Y, this->UpperBound_.Y);
 
                         // Equation (10) from the paper "An improved grey wolf optimizer for solving engineering problems"
-                        Radius += std::hypot(CurrentPopulation->Position[BreakpointIndex].X - NewPosition.X,
-                                             CurrentPopulation->Position[BreakpointIndex].Y - NewPosition.Y);
+                        Radius += std::pow(CurrentPopulation->Position[BreakpointIndex].X - NewPosition.X, 2) +
+                                  std::pow(CurrentPopulation->Position[BreakpointIndex].Y - NewPosition.Y, 2);
 
                         // Store GWO position
                         GWOPosition[BreakpointIndex] = NewPosition;
                     }
+
+                    Radius = sqrt(Radius);
 
                     // Get the index of neighborhood and calculate the DLH position
                     std::vector<int> Index = GetNeighborHoodIndex(CurrentPopulation, Radius);
@@ -512,9 +514,12 @@ namespace MTH
                     // Calculate the distance between the current wolf and neighbor wolf in the population
                     for (int BreakpointIndex = 0; BreakpointIndex < this->NBreakpoint_; ++BreakpointIndex)
                     {
-                        Distance += std::hypot(CurrentPopulation->Position[BreakpointIndex].X - AnotherPopulation->Position[BreakpointIndex].X,
-                                               CurrentPopulation->Position[BreakpointIndex].Y - AnotherPopulation->Position[BreakpointIndex].Y);
+                        Distance += std::pow(CurrentPopulation->Position[BreakpointIndex].X - AnotherPopulation->Position[BreakpointIndex].X, 2) +
+                                    std::pow(CurrentPopulation->Position[BreakpointIndex].Y - AnotherPopulation->Position[BreakpointIndex].Y, 2);
+
                     }
+
+                    Distance = sqrt(Distance);
 
                     // Equation (11) from the paper "An improved grey wolf optimizer for solving engineering problems"
                     if (Distance <= Radius)
