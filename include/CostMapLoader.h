@@ -22,7 +22,7 @@ namespace CostMapLoader
          */
         enum MAP
         {
-            VALIDATED = 0,            /**< The validated map is used to validate path planning algorithms.
+            VALIDATION = 0,           /**< The validated map is used to validate path planning algorithms.
                                         * All algorithms should output a straight line between the start and goal points.
                                         */
             SCENARIO_1 = 1,           /**< Scenario 1 map. */
@@ -126,8 +126,8 @@ namespace CostMapLoader
 
         switch (CostMapName)
         {
-            case MAP::VALIDATED:
-                CostMapFile = "../map/validated.txt";
+            case MAP::VALIDATION:
+                CostMapFile = "../map/validation.txt";
                 Width = 256;
                 Height = 256;
                 Start = MTH::APoint(44, 205);
