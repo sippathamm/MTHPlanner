@@ -1,17 +1,21 @@
 # Path Planning with Metaheuristic Algorithms
 
 <p align="center">
-  <img width="295" height="295" src="https://github.com/sippathamm/MTHPlanner/blob/master/Turtlebot3_World.png">
+  <img width="295" height="295" src="https://github.com/sippathamm/MTHPlanner/blob/master/turtlebot3_world_path.png">
 </p>
         
-This repository provides implementations of path planning using metaheuristic algorithms, 
+This repository provides implementations of path planning using metaheuristic algorithms based-on cost map, 
 including IPSO, IGWO, and ABC. It includes an example file `Planner.cpp` in the `source` directory.
 
 ## Usages
 
+### Example
+Run the example file `Planner.cpp` in the `source` directory. You can change the configurations of planner and path in the file. 
+It outputs some useful information such as convergence, breakpoint and waypoint coordinates, and path length.
+
 ### Helper Python Scripts
 
-This repository also includes three helper Python scripts in the `scripts` directory:
+There are three helper Python scripts in the `scripts` directory:
 
 - `create_costmap_from_image.py`: This Python script converts an image file representing 
 a map into a text-based cost map file. The cost map file contains information about the obstacles 
@@ -30,7 +34,7 @@ You can adjust the minimum cost for defining lethal areas by modifying the macro
 ## Animation
 
 <p align="center">
-  <img src="https://github.com/sippathamm/MTHPlanner/blob/master/Animation.gif">
+  <img src="https://github.com/sippathamm/MTHPlanner/blob/master/animation.gif">
 </p>
 
 ## Author
