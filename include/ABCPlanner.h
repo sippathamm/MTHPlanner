@@ -35,26 +35,16 @@ namespace MTH
             /**
              * @brief Constructor.
              *
-             * @param LowerBound Lower bound of the search space.
-             * @param UpperBound Upper bound of the search space.
-             * @param MaximumIteration Maximum number of iterations.
-             * @param NPopulation Population size.
-             * @param NBreakpoint Number of breakpoints.
-             * @param NWaypoint Number of waypoints.
-             * @param InitialPositionType Type of initial position distribution.
-             * @param TrajectoryType Type of trajectory.
-             * @param Log Flag indicating whether to log information during optimization.
+             * @param PlannerConfiguration Configuration of optimization algorithm.
+             * @param PathConfiguration Configuration of path.
              */
-            AABCPlanner (const APoint &LowerBound, const APoint &UpperBound,
-                         int MaximumIteration, int NPopulation, int NBreakpoint, int NWaypoint,
-                         INITIAL_POSITION_TYPE InitialPositionType = INITIAL_POSITION::DISTRIBUTED,
-                         TRAJECTORY_TYPE TrajectoryType = TRAJECTORY::CUBIC_SPLINE,
-                         bool Log = true) :
-                         ABasePlanner(LowerBound, UpperBound,
-                                      MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
-                                      TrajectoryType),
-                         InitialPositionType_(InitialPositionType),
-                         Log_(Log)
+            AABCPlanner (const CONFIGURATION::APlannerConfiguration &PlannerConfiguration,
+                         const CONFIGURATION::APathConfiguration &PathConfiguration) :
+                         ABasePlanner(PlannerConfiguration.LowerBound, PlannerConfiguration.UpperBound,
+                                      PlannerConfiguration.MaximumIteration, PlannerConfiguration.NPopulation, PathConfiguration.NBreakpoint, PathConfiguration.NWaypoint,
+                                      PathConfiguration.TrajectoryType),
+                         InitialPositionType_(PlannerConfiguration.InitialPositionType),
+                         Log_(PlannerConfiguration.Log)
             {
                 std::cout << "[INFO] ABC Planner instance has been created." << std::endl;
             }

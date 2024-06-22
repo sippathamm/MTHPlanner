@@ -1,9 +1,11 @@
 //
 // Created by Sippawit Thammawiset on 3/2/2024 AD.
+// TODO: - Separate .h and .cpp files
 //
 
-#include "Print.h"
+#include "Configuration.h"
 #include "CostMapLoader.h"
+#include "Print.h"
 #include "ABCPlanner.h"
 #include "IPSOPlanner.h"
 #include "IGWOPlanner.h"
@@ -19,19 +21,23 @@ int main ()
     // Load cost map and initialize start and goal points
     auto CostMap = CostMapLoader::CostMapLoader(CostMapName, Width, Height, Start, Goal);
 
-    MTH::APoint LowerBound(0, 0); // Lower bound of the search space
-    MTH::APoint UpperBound(Width, Height); // Upper bound of the search space
-    int MaximumIteration = 100; // Maximum number of iterations for optimization
-    int NPopulation = 50; // Population size
-    int NBreakpoint = 3; // Number of breakpoints
-    int NInterpolationPoint = 5; // Number of interpolation points
-    int NWaypoint = 1 + (NBreakpoint + 1) * NInterpolationPoint; // Number of waypoints
+    MTH::CONFIGURATION::APlannerConfiguration PlannerConfiguration;
+    PlannerConfiguration.LowerBound = MTH::APoint (0, 0);
+    PlannerConfiguration.UpperBound = MTH::APoint (Width, Height);
+    PlannerConfiguration.MaximumIteration = 100;
+    PlannerConfiguration.NPopulation = 50;
+    PlannerConfiguration.InitialPositionType = MTH::INITIAL_POSITION::CIRCULAR;
+    PlannerConfiguration.Log = true;
+
+    MTH::CONFIGURATION::APathConfiguration PathConfiguration;
+    PathConfiguration.NBreakpoint = 3;
+    int NInterpolationPoint = 5;
+    PathConfiguration.NWaypoint = 1 + (PathConfiguration.NBreakpoint + 1) * NInterpolationPoint;
+    PathConfiguration.TrajectoryType = MTH::TRAJECTORY::CUBIC_SPLINE;
+
     double MaximumInertialWeight = 0.9; // Maximum inertial weight
     double MinimumInertialWeight = 0.4; // Minimum inertial weight
     double VelocityFactor = 0.5; // Velocity factor for limiting velocity update
-    MTH::INITIAL_POSITION_TYPE InitialPositionType = MTH::INITIAL_POSITION::CIRCULAR; // Type of initial position distribution
-    MTH::TRAJECTORY_TYPE TrajectoryType = MTH::TRAJECTORY::CUBIC_SPLINE; // Type of trajectory
-    bool Log = true; // Flag indicating whether to log information during optimization
 
     // IPSO parameters
     double SocialCoefficient = 2.0; // Social coefficient
@@ -48,16 +54,15 @@ int main ()
     int NRun = 1; // Number of runs
 
     // Initialize planners
-    MTH::IPSO::AIPSOPlanner IPSOPlanner(LowerBound, UpperBound, MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
+    MTH::IPSO::AIPSOPlanner IPSOPlanner(PlannerConfiguration, PathConfiguration,
                                         SocialCoefficient, CognitiveCoefficient, MaximumInertialWeight, MinimumInertialWeight,
-                                        VelocityFactor, VelocityConfinement, InitialPositionType, TrajectoryType, Log);
+                                        VelocityFactor, VelocityConfinement);
 
-    MTH::IGWO::AIGWOPlanner IGWOPlanner(LowerBound, UpperBound, MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
+    MTH::IGWO::AIGWOPlanner IGWOPlanner(PlannerConfiguration, PathConfiguration,
                                         MaximumWeight, MinimumWeight, MaximumInertialWeight, MinimumInertialWeight,
-                                        VelocityFactor, InitialPositionType, TrajectoryType, Log);
+                                        VelocityFactor);
 
-    MTH::ABC::AABCPlanner ABCPlanner(LowerBound, UpperBound, MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
-                                     InitialPositionType, TrajectoryType, Log);
+    MTH::ABC::AABCPlanner ABCPlanner(PlannerConfiguration, PathConfiguration);
 
     MTH::ABasePlanner *Planner = &IPSOPlanner; // Set the planner to IPSO Planner by default
 

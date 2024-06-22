@@ -41,39 +41,29 @@ namespace MTH
             /**
              * @brief Constructor.
              *
-             * @param LowerBound Lower bound of the search space.
-             * @param UpperBound Upper bound of the search space.
-             * @param MaximumIteration Maximum number of iterations.
-             * @param NPopulation Population size.
-             * @param NBreakpoint Number of breakpoints.
-             * @param NWaypoint Number of waypoints.
+             * @param PlannerConfiguration Configuration of optimization algorithm.
+             * @param PathConfiguration Configuration of path.
              * @param MaximumWeight The maximum weight.
              * @param MinimumWeight The minimum weight.
              * @param MaximumInertialWeight Maximum inertial weight for velocity update.
              * @param MinimumInertialWeight Minimum inertial weight for velocity update.
              * @param VelocityFactor Factor for limiting velocity update.
-             * @param InitialPositionType Type of initial position distribution.
-             * @param TrajectoryType Type of trajectory.
-             * @param Log Flag indicating whether to log information during optimization.
              */
-            AIGWOPlanner (const APoint &LowerBound, const APoint &UpperBound,
-                          int MaximumIteration, int NPopulation, int NBreakpoint, int NWaypoint,
+            AIGWOPlanner (const CONFIGURATION::APlannerConfiguration &PlannerConfiguration,
+                          const CONFIGURATION::APathConfiguration &PathConfiguration,
                           double MaximumWeight = 2.2, double MinimumWeight = 0.02,
                           double MaximumInertialWeight = 0.9, double MinimumInertialWeight = 0.4,
-                          double VelocityFactor = 0.5,
-                          INITIAL_POSITION_TYPE InitialPositionType = INITIAL_POSITION::DISTRIBUTED,
-                          TRAJECTORY_TYPE TrajectoryType = TRAJECTORY::CUBIC_SPLINE,
-                          bool Log = true) :
-                          ABasePlanner(LowerBound, UpperBound,
-                                       MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
-                                       TrajectoryType),
+                          double VelocityFactor = 0.5) :
+                          ABasePlanner(PlannerConfiguration.LowerBound, PlannerConfiguration.UpperBound,
+                                       PlannerConfiguration.MaximumIteration, PlannerConfiguration.NPopulation, PathConfiguration.NBreakpoint, PathConfiguration.NWaypoint,
+                                       PathConfiguration.TrajectoryType),
                           MaximumWeight_(MaximumWeight),
                           MinimumWeight_(MinimumWeight),
                           MaximumInertialWeight_(MaximumInertialWeight),
                           MinimumInertialWeight_(MinimumInertialWeight),
                           VelocityFactor_(VelocityFactor),
-                          InitialPositionType_(InitialPositionType),
-                          Log_(Log)
+                          InitialPositionType_(PlannerConfiguration.InitialPositionType),
+                          Log_(PlannerConfiguration.Log)
             {
                 std::cout << "[INFO] IGWO Planner instance has been created." << std::endl;
             }

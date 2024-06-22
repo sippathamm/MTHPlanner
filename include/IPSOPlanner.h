@@ -6,6 +6,7 @@
 #define IPSO_PLANNER_H
 
 #include "BasePlanner.h"
+#include "Configuration.h"
 
 namespace MTH
 {
@@ -50,42 +51,32 @@ namespace MTH
             /**
              * @brief Constructor.
              *
-             * @param LowerBound Lower bound of the search space.
-             * @param UpperBound Upper bound of the search space.
-             * @param MaximumIteration Maximum number of iterations.
-             * @param NPopulation Population size.
-             * @param NBreakpoint Number of breakpoints.
-             * @param NWaypoint Number of waypoints.
+             * @param PlannerConfiguration Configuration of optimization algorithm.
+             * @param PathConfiguration Configuration of path.
              * @param SocialCoefficient Social coefficient for velocity update.
              * @param CognitiveCoefficient Cognitive coefficient for velocity update.
              * @param MaximumInertialWeight Maximum inertial weight for velocity update.
              * @param MinimumInertialWeight Minimum inertial weight for velocity update.
              * @param VelocityFactor Factor for limiting velocity update.
              * @param VelocityConfinement Type of velocity confinement method.
-             * @param InitialPositionType Type of initial position distribution.
-             * @param TrajectoryType Type of trajectory.
-             * @param Log Flag indicating whether to log information during optimization.
              */
-            AIPSOPlanner (const APoint &LowerBound, const APoint &UpperBound,
-                          int MaximumIteration, int NPopulation, int NBreakpoint, int NWaypoint,
-                          double SocialCoefficient = 1.5, double CognitiveCoefficient = 1.5,
-                          double MaximumInertialWeight = 0.9, double MinimumInertialWeight = 0.4,
-                          double VelocityFactor = 0.5,
-                          int VelocityConfinement = VELOCITY_CONFINEMENT::RANDOM_BACK,
-                          INITIAL_POSITION_TYPE InitialPositionType = INITIAL_POSITION::DISTRIBUTED,
-                          TRAJECTORY_TYPE TrajectoryType = TRAJECTORY::CUBIC_SPLINE,
-                          bool Log = true) :
-                          ABasePlanner(LowerBound, UpperBound,
-                                       MaximumIteration, NPopulation, NBreakpoint, NWaypoint,
-                                       TrajectoryType),
-                          SocialCoefficient_(SocialCoefficient),
-                          CognitiveCoefficient_(CognitiveCoefficient),
-                          MaximumInertialWeight_(MaximumInertialWeight),
-                          MinimumInertialWeight_(MinimumInertialWeight),
-                          VelocityFactor_(VelocityFactor),
-                          VelocityConfinement_(VelocityConfinement),
-                          InitialPositionType_(InitialPositionType),
-                          Log_(Log)
+            inline explicit AIPSOPlanner (const CONFIGURATION::APlannerConfiguration &PlannerConfiguration,
+                                          const CONFIGURATION::APathConfiguration &PathConfiguration,
+                                          double SocialCoefficient = 1.5, double CognitiveCoefficient = 1.5,
+                                          double MaximumInertialWeight = 0.9, double MinimumInertialWeight = 0.4,
+                                          double VelocityFactor = 0.5,
+                                          int VelocityConfinement = VELOCITY_CONFINEMENT::RANDOM_BACK) :
+                                          ABasePlanner(PlannerConfiguration.LowerBound, PlannerConfiguration.UpperBound,
+                                                       PlannerConfiguration.MaximumIteration, PlannerConfiguration.NPopulation, PathConfiguration.NBreakpoint, PathConfiguration.NWaypoint,
+                                                       PathConfiguration.TrajectoryType),
+                                          SocialCoefficient_(SocialCoefficient),
+                                          CognitiveCoefficient_(CognitiveCoefficient),
+                                          MaximumInertialWeight_(MaximumInertialWeight),
+                                          MinimumInertialWeight_(MinimumInertialWeight),
+                                          VelocityFactor_(VelocityFactor),
+                                          VelocityConfinement_(VelocityConfinement),
+                                          InitialPositionType_(PlannerConfiguration.InitialPositionType),
+                                          Log_(PlannerConfiguration.Log)
             {
                 std::cout << "[INFO] IPSO Planner instance has been created. " << std::endl;
             }
