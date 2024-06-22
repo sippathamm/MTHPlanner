@@ -110,7 +110,6 @@ namespace MTH
          */
         virtual void Clear () = 0;
 
-
     protected:
         APoint LowerBound_; /**< Lower bound of the search space. */
         APoint UpperBound_; /**< Upper bound of the search space. */
