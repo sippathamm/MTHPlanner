@@ -55,7 +55,7 @@ def plot(start: tuple[float, float], start_size: int,
 
     # Plot the waypoints
     plt.plot([x for x, y in waypoints], [y for x, y in waypoints],
-             color=waypoint_color, linewidth=waypoint_line_width, zorder=1, label='Waypoint')
+             color=waypoint_color, linewidth=waypoint_line_width, zorder=1, label='Path')
 
     # Add legend and turn off axis
     plt.legend(loc='best')
