@@ -8,6 +8,7 @@ include_directories(include)
 add_executable(MTHPlanner
         include/ABCPlanner.h
         include/BasePlanner.h
+        include/Configuration.h
         include/CostMapLoader.h
         include/IGWOPlanner.h
         include/IPSOPlanner.h
